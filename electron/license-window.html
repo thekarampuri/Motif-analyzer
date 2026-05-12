@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Motif Analyzer — Activation</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a1814;
+      color: #e8e0d6;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-app-region: drag;
+    }
+
+    .card {
+      background: #211e1a;
+      border: 1px solid #332e28;
+      border-radius: 12px;
+      padding: 30px 32px 26px;
+      width: 440px;
+      -webkit-app-region: no-drag;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .logo-icon  { font-size: 20px; color: #c8a96e; line-height: 1; }
+    .logo-title {
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #e8e0d6;
+    }
+    .logo-badge {
+      margin-left: auto;
+      font-size: 9px;
+      font-family: 'Courier New', monospace;
+      background: #2e2820;
+      border: 1px solid #3a3228;
+      border-radius: 4px;
+      padding: 2px 7px;
+      color: #8a7a65;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #e8e0d6;
+      margin-bottom: 5px;
+    }
+    .subtitle {
+      font-size: 11px;
+      color: #7a6a55;
+      line-height: 1.55;
+      margin-bottom: 22px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6a5a48;
+      margin-bottom: 6px;
+    }
+
+    .machine-id-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .machine-id-box {
+      flex: 1;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 10px;
+      background: #171410;
+      border: 1px solid #2e2820;
+      border-radius: 6px;
+      padding: 9px 11px;
+      color: #c8a96e;
+      word-break: break-all;
+      line-height: 1.7;
+      letter-spacing: 0.04em;
+    }
+    .copy-btn {
+      background: #2a2420;
+      border: 1px solid #3a3228;
+      border-radius: 6px;
+      color: #8a7a65;
+      cursor: pointer;
+      padding: 0 14px;
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      white-space: nowrap;
+      transition: background .12s, color .12s, border-color .12s;
+    }
+    .copy-btn:hover  { background: #352e26; color: #c8a96e; border-color: #c8a96e44; }
+    .copy-btn:active { background: #1e1a16; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #2a2420;
+      margin: 18px 0;
+    }
+
+    textarea {
+      width: 100%;
+      height: 86px;
+      background: #171410;
+      border: 1px solid #2e2820;
+      border-radius: 6px;
+      color: #e8e0d6;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 10px;
+      padding: 9px 11px;
+      resize: none;
+      outline: none;
+      line-height: 1.55;
+      transition: border-color .15s;
+      margin-bottom: 14px;
+    }
+    textarea:focus { border-color: #c8a96e88; }
+    textarea::placeholder { color: #4a4038; }
+
+    .activate-btn {
+      width: 100%;
+      height: 38px;
+      background: #c8a96e;
+      border: none;
+      border-radius: 7px;
+      color: #1a1410;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .12s, opacity .12s;
+    }
+    .activate-btn:hover    { background: #d4b87a; }
+    .activate-btn:active   { background: #b8995e; }
+    .activate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .status-bar {
+      min-height: 20px;
+      margin-top: 10px;
+      font-size: 11px;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .status-bar.error   { color: #d07070; }
+    .status-bar.success { color: #70b890; }
+
+    .step-hint {
+      margin-top: 18px;
+      background: #1a1814;
+      border: 1px solid #2a2420;
+      border-radius: 6px;
+      padding: 10px 13px;
+      font-size: 10px;
+      color: #5a4e3e;
+      line-height: 1.65;
+    }
+    .step-hint strong { color: #7a6a58; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <div class="logo">
+      <span class="logo-icon">◈</span>
+      <span class="logo-title">Motif Analyzer</span>
+      <span class="logo-badge">Activation</span>
+    </div>
+
+    <h2>Software Activation Required</h2>
+    <p class="subtitle">
+      This software is locked to a single machine.<br>
+      Copy your Machine ID below and send it to your vendor to receive a license key.
+    </p>
+
+    <label class="field-label">Your Machine ID</label>
+    <div class="machine-id-row">
+      <div class="machine-id-box" id="machineId">Loading…</div>
+      <button class="copy-btn" id="copyBtn" onclick="copyId()">Copy</button>
+    </div>
+
+    <hr class="divider">
+
+    <label class="field-label">License Key</label>
+    <textarea id="licenseKey" placeholder="Paste your license key here…" spellcheck="false"></textarea>
+
+    <button class="activate-btn" id="activateBtn" onclick="activate()">Activate Software</button>
+    <div class="status-bar" id="statusBar"></div>
+
+    <div class="step-hint">
+      <strong>How to activate:</strong><br>
+      ① Copy your Machine ID above &nbsp;→&nbsp;
+      ② Send it to your vendor &nbsp;→&nbsp;
+      ③ Paste the license key you receive &nbsp;→&nbsp;
+      ④ Click Activate
+    </div>
+
+  </div>
+
+  <script>
+    async function init() {
+      const id = await window.licenseAPI.getMachineId();
+      document.getElementById('machineId').textContent = id;
+    }
+
+    function copyId() {
+      const id  = document.getElementById('machineId').textContent;
+      const btn = document.getElementById('copyBtn');
+      navigator.clipboard.writeText(id).then(() => {
+        btn.textContent = '✓ Copied';
+        btn.style.color = '#c8a96e';
+        setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; }, 2000);
+      });
+    }
+
+    async function activate() {
+      const key = document.getElementById('licenseKey').value.trim();
+      if (!key) { showStatus('Please paste your license key first.', 'error'); return; }
+
+      const btn = document.getElementById('activateBtn');
+      btn.disabled   = true;
+      btn.textContent = 'Verifying…';
+      showStatus('', '');
+
+      const result = await window.licenseAPI.tryActivate(key);
+
+      if (result.success) {
+        showStatus('✓ Activated! Opening application…', 'success');
+        btn.textContent = '✓ Activated';
+      } else {
+        showStatus(result.error || 'Activation failed. Check the key and try again.', 'error');
+        btn.disabled    = false;
+        btn.textContent = 'Activate Software';
+      }
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('statusBar');
+      el.textContent = msg;
+      el.className   = 'status-bar ' + type;
+    }
+
+    init();
+  </script>
+</body>
+</html>

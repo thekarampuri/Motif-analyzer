@@ -1,6 +1,9 @@
 const { app, BrowserWindow, ipcMain, protocol } = require('electron');
-const path = require('path');
-const fs   = require('fs');
+const path    = require('path');
+const fs      = require('fs');
+const license = require('./license');
+
+const isDev = process.env.NODE_ENV === 'development';
 
 // ── MUST be called before app.whenReady() ──
 // Without this, the custom scheme is untrusted: JS runs but React can't
@@ -156,6 +159,47 @@ function createWindow() {
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
+// ── License window ──
+function createLicenseWindow() {
+  const licWin = new BrowserWindow({
+    width: 500,
+    height: 510,
+    resizable: false,
+    maximizable: false,
+    minimizable: false,
+    autoHideMenuBar: true,
+    title: 'Motif Analyzer — Activation',
+    backgroundColor: '#1a1814',
+    webPreferences: {
+      preload: path.join(app.getAppPath(), 'electron', 'license-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+    show: false,
+  });
+  licWin.loadFile(path.join(app.getAppPath(), 'electron', 'license-window.html'));
+  licWin.once('ready-to-show', () => licWin.show());
+  licWin.on('closed', () => { if (!mainWindow) app.quit(); });
+}
+
+// ── IPC: license ──
+ipcMain.handle('get-machine-id', () => license.getMachineId());
+
+ipcMain.handle('try-activate', (event, licenseKey) => {
+  const machineId = license.getMachineId();
+  if (license.verifyLicense(machineId, licenseKey)) {
+    license.saveLicense(machineId, licenseKey);
+    // Short delay so the success message is visible before the window transitions
+    setTimeout(() => {
+      const licWin = BrowserWindow.fromWebContents(event.sender);
+      createWindow();
+      if (licWin && !licWin.isDestroyed()) licWin.close();
+    }, 900);
+    return { success: true };
+  }
+  return { success: false, error: 'Invalid license key for this machine.' };
+});
+
 // ── IPC: save BMP file ──
 ipcMain.handle('save-bmp', async (_event, { fileName, buffer }) => {
   try {
@@ -181,7 +225,14 @@ ipcMain.on('request-bitmaps', sendBitmaps);
 app.whenReady().then(() => {
   ensureFolders();
   registerProtocol();
-  createWindow();
+
+  // Skip license check in dev mode so `npm run dev:electron` works normally
+  if (isDev || license.loadAndVerify()) {
+    createWindow();
+  } else {
+    createLicenseWindow();
+  }
+
   startWatchers();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

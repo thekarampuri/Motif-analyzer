@@ -17,7 +17,7 @@
     "appId": "com.motifanalyzer.app",
     "productName": "Motif Analyzer",
     "directories": {
-      "output": "dist"
+      "output": "release"
     },
     "files": [
       "electron/**/*",
