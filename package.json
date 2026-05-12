@@ -11,7 +11,8 @@
     "build:next": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "dist": "npm run build:next && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win"
+    "dist": "npm run build:next && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win",
+    "dist:branded": "npm run build:next && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win"
   },
   "build": {
     "appId": "com.motifanalyzer.app",

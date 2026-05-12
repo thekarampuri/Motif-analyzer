@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { Upload, Move, ArrowLeftRight, Eraser, Lasso, PaintBucket, Pen } from 'lucide-react';
 import type { Tool, FillMode, BitmapItem } from '@/lib/types';
 
@@ -110,14 +110,7 @@ export default function LeftPanel({
   activeTool, onToolChange, penColorHex, onPenColorChange, floatCountText,
 }: LeftPanelProps) {
   const uploadRef = useRef<HTMLInputElement>(null);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!window.electronAPI?.getLogo) return;
-    window.electronAPI.getLogo().then(res => {
-      if (res.found && res.dataUrl) setLogoUrl(res.dataUrl);
-    });
-  }, []);
+  const [logoMissing, setLogoMissing] = useState(false);
 
   /* ── helpers ── */
   const Num = (v: number, cb: (n:number)=>void, min=1, max=9999) => (
@@ -308,16 +301,17 @@ export default function LeftPanel({
         </div>
       </div>
 
-      {/* ── Business Logo ── */}
-      {logoUrl && (
+      {/* ── Business Logo (bundled at build time via public/logo.png) ── */}
+      {!logoMissing && (
         <div style={{
           marginTop: 'auto', padding: '8px 4px 6px',
           borderTop: '1px solid var(--panel-border)',
           display: 'flex', justifyContent: 'center', alignItems: 'center',
         }}>
           <img
-            src={logoUrl}
+            src="/logo.png"
             alt="Business Logo"
+            onError={() => setLogoMissing(true)}
             style={{ maxWidth: '100%', maxHeight: 60, objectFit: 'contain', display: 'block' }}
           />
         </div>
