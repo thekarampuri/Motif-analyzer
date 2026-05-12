@@ -1,0 +1,3077 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Motif Analyzer v72</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  width:100vw;height:100vh;
+  font-family:'Inter',sans-serif;
+  background:#f0ede8;
+  overflow:hidden;
+  color:#2c2a26;
+}
+
+header{
+  position:fixed;top:0;left:0;width:100%;height:38px;
+  background:#fff;
+  border-bottom:1px solid #d8d2c8;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 10px;
+  z-index:200;gap:6px;
+  box-shadow:0 1px 4px rgba(0,0,0,.07);
+}
+
+#mainLayout{display:flex;margin-top:38px;height:calc(100vh - 38px);}
+
+#leftPanel{
+  width:158px;min-width:158px;
+  padding:3px 5px;
+  background:#f5f2ee;
+  border-right:1px solid #ddd8d0;
+  overflow-y:hidden;
+  display:flex;flex-direction:column;gap:0;
+  font-size:11px;
+  justify-content:flex-start;
+}
+
+.section{
+  display:flex;flex-direction:column;gap:2px;
+  padding:3px 0;
+  border-bottom:1px solid #e4dfd8;
+}
+.section:last-child{border-bottom:none;}
+
+.sec-title{
+  font-family:'JetBrains Mono',monospace;
+  font-size:7px;font-weight:700;letter-spacing:1.5px;
+  color:#bbb0a0;text-transform:uppercase;
+  margin-bottom:0;
+}
+.flabel{
+  font-size:9px;font-weight:600;color:#8a8078;
+  white-space:nowrap;
+}
+
+input[type="file"]{
+  position:absolute;width:1px;height:1px;
+  opacity:0;pointer-events:none;clip:rect(0,0,0,0);overflow:hidden;
+}
+
+.browse-btn{
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  padding:3px 5px;
+  background:#eceae6;border:1px solid #d4cfc8;border-radius:4px;
+  color:#3a3530;font-size:9.5px;font-family:'JetBrains Mono',monospace;
+  cursor:pointer;transition:background .12s,border-color .12s;
+  width:100%;user-select:none;font-weight:600;letter-spacing:.1px;
+}
+.browse-btn:hover{background:#e2deda;border-color:#bfb8b0;}
+.browse-btn:active{background:#d8d2cc;}
+
+/* Bitmap reload row */
+.bmp-row{display:flex;gap:3px;align-items:stretch;}
+.bmp-row .browse-btn{flex:1;}
+.bmp-reload{
+  padding:3px 5px;
+  background:#eceae6;border:1px solid #d4cfc8;border-radius:4px;
+  color:#7a6a55;font-size:9px;cursor:pointer;
+  transition:background .12s;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.bmp-reload:hover{background:#e2deda;border-color:#bfb8b0;}
+.bmp-reload.has-saved{color:#3a7a50;border-color:#90c4a0;}
+
+.lib-sel,select#borderMode{
+  width:100%;padding:2px 4px;
+  background:#eceae6;border:1px solid #d4cfc8;border-radius:4px;
+  color:#2c2a26;font-size:9.5px;font-family:'Inter',sans-serif;
+  cursor:pointer;outline:none;height:22px;
+  transition:border-color .12s;
+}
+.lib-sel:hover,.lib-sel:focus,
+select#borderMode:hover,select#borderMode:focus{border-color:#bfb8b0;background:#fff;}
+.lib-sel option,select#borderMode option{background:#fff;}
+
+/* ── Custom Thumbnail Dropdown ── */
+.thumb-dd{
+  position:relative;width:100%;user-select:none;
+}
+.thumb-dd-trigger{
+  display:flex;align-items:center;gap:5px;
+  padding:2px 5px 2px 3px;
+  background:#eceae6;border:1px solid #d4cfc8;border-radius:4px;
+  cursor:pointer;height:28px;box-sizing:border-box;
+  transition:border-color .12s,background .12s;
+}
+.thumb-dd-trigger:hover{border-color:#bfb8b0;background:#fff;}
+.thumb-dd-trigger.open{border-color:#bfb8b0;background:#fff;}
+.thumb-dd-thumb{
+  width:22px;height:22px;border-radius:2px;
+  border:1px solid #d0cbc3;background:#ece8e2;
+  flex-shrink:0;image-rendering:pixelated;
+}
+.thumb-dd-label{
+  flex:1;font-size:9px;font-family:'Inter',sans-serif;
+  color:#2c2a26;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.thumb-dd-arrow{
+  font-size:7px;color:#a09080;flex-shrink:0;transition:transform .15s;
+}
+.thumb-dd-trigger.open .thumb-dd-arrow{transform:rotate(180deg);}
+
+.thumb-dd-list{
+  position:fixed;
+  background:#fff;border:1px solid #d0cbc3;border-radius:5px;
+  box-shadow:0 4px 16px rgba(0,0,0,.15);
+  overflow-y:auto;max-height:220px;
+  z-index:9999;
+  display:none;
+}
+.thumb-dd-list.open{display:block;}
+.thumb-dd-item{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 7px;cursor:pointer;
+  transition:background .1s;
+}
+.thumb-dd-item:hover{background:#f0ede8;}
+.thumb-dd-item.selected{background:#e8f0e8;}
+.thumb-dd-item canvas{
+  width:28px;height:28px;flex-shrink:0;
+  border:1px solid #d8d3cc;border-radius:2px;
+  image-rendering:pixelated;background:#ece8e2;
+}
+.thumb-dd-item-none{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 7px;cursor:pointer;
+  transition:background .1s;font-style:italic;
+  color:#a09080;font-size:9px;font-family:'Inter',sans-serif;
+}
+.thumb-dd-item-none:hover{background:#f0ede8;}
+.thumb-dd-item-none.selected{background:#e8f0e8;}
+.thumb-dd-item span{
+  font-size:9px;font-family:'Inter',sans-serif;color:#2c2a26;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+.num-input,input[type="number"]#vBorderLen{
+  padding:1px 2px;
+  background:#eceae6;border:1px solid #d4cfc8;border-radius:4px;
+  color:#2c2a26;font-size:9.5px;font-family:'JetBrains Mono',monospace;
+  outline:none;width:38px;height:22px;text-align:center;flex-shrink:0;
+}
+.num-input:focus,input[type="number"]#vBorderLen:focus{border-color:#bfb8b0;background:#fff;}
+
+.row-inline{display:flex;align-items:center;gap:6px;}
+.row-inline > select{flex:1;}
+
+canvas.prevCv{
+  display:block;width:30px;height:30px;
+  border:1px solid #d4cfc8;border-radius:3px;
+  image-rendering:pixelated;background:#ece8e2;
+  flex-shrink:0;
+}
+canvas.prevCv.active-left{border-color:#6a9a7a;box-shadow:0 0 3px #6a9a7a33;}
+.prev-lbl{
+  font-size:7.5px;color:#a09080;font-family:'JetBrains Mono',monospace;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;
+}
+
+.chk-row{
+  display:flex;align-items:center;gap:5px;
+  cursor:pointer;user-select:none;
+  font-size:9.5px;font-weight:500;color:#3a3530;flex:1;
+}
+.chk-row input[type="checkbox"]{
+  position:static;width:12px;height:12px;
+  opacity:1;pointer-events:auto;clip:auto;overflow:visible;
+  accent-color:#7a6a55;cursor:pointer;flex-shrink:0;
+}
+.float-row{display:flex;align-items:center;gap:5px;}
+.sec-div{border:none;border-top:1px solid #e4dfd8;margin:1px 0;}
+
+/* TOOL BUTTONS — icon style */
+.tool-row{display:flex;gap:3px;}
+.tool-btn{
+  flex:1;padding:4px 3px;
+  background:#eceae6;border:1px solid #d4cfc8;border-radius:5px;
+  color:#3a3530;font-size:7px;font-family:'JetBrains Mono',monospace;
+  cursor:pointer;transition:background .12s,border-color .12s,box-shadow .12s;
+  text-align:center;line-height:1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  user-select:none;min-height:26px;
+}
+.tool-btn img{width:18px;height:18px;object-fit:contain;display:block;pointer-events:none;}
+.tool-btn:hover{background:#e2deda;border-color:#bfb8b0;}
+.tool-btn.active{background:#3a3530;border-color:#2a2520;box-shadow:inset 0 1px 3px rgba(0,0,0,.3);}
+.tool-btn.active img{filter:brightness(0) invert(1);}
+
+#canvasContainer{position:relative;display:inline-block;flex-shrink:0;}
+#canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;}
+#overlayCanvas{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  image-rendering:pixelated;pointer-events:none;
+}
+
+.abtn{
+  width:100%;padding:3px 5px;
+  background:#eceae6;border:1px solid #d4cfc8;border-radius:4px;
+  color:#3a3530;font-size:9.5px;font-family:'JetBrains Mono',monospace;
+  cursor:pointer;transition:background .12s,border-color .12s;
+  display:flex;align-items:center;justify-content:center;gap:4px;font-weight:600;
+}
+.abtn:hover{background:#e2deda;border-color:#bfb8b0;}
+.abtn.process{
+  background:#2c5c3c;border-color:#1e4a2c;color:#d8f0e2;
+  font-size:9.5px;font-weight:700;padding:5px;
+}
+.abtn.process:hover{background:#1e4a2c;}
+.abtn.process:disabled{background:#c0cec0;border-color:#a8bea8;color:#7a987a;cursor:not-allowed;}
+.abtn.warn{background:#faf5e8;border-color:#d8b86a;color:#7a5a18;}
+.abtn.warn:hover{background:#f5eed8;border-color:#c0a050;}
+.abtn.danger{background:#faf0f0;border-color:#d8a0a0;color:#7a2828;}
+.abtn.danger:hover{background:#f5e4e4;border-color:#c07878;}
+
+#statusBar{
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:#9a9080;padding:4px 7px;
+  background:#f5f2ed;border:1px solid #ddd8d0;border-radius:4px;
+  letter-spacing:.3px;min-height:20px;word-break:break-all;
+}
+#statusBar.ok  {color:#3a7a50;}
+#statusBar.busy{color:#b87820;}
+#statusBar.err {color:#b83030;}
+
+#rightPanel{flex:1;position:relative;background:#e8e4de;overflow:hidden;}
+
+#zoomStrip{
+  position:absolute;top:8px;right:10px;
+  z-index:10;
+  display:flex;gap:5px;align-items:center;
+}
+.zs-btn{
+  padding:4px 10px;
+  background:#fff;border:1px solid #c8bfb0;border-radius:4px;
+  color:#4a4038;font-size:11px;font-family:'JetBrains Mono',monospace;
+  cursor:pointer;transition:all .13s;font-weight:600;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
+}
+.zs-btn:hover{background:#f0ede8;border-color:#a89880;}
+#zoomBadge{
+  padding:4px 8px;
+  background:#fff;border:1px solid #c8bfb0;border-radius:4px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:#7a6a55;
+  pointer-events:none;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
+  min-width:52px;text-align:center;
+}
+
+#viewport{
+  width:100%;height:100%;overflow:auto;cursor:crosshair;
+  position:relative;
+}
+#viewport::-webkit-scrollbar{width:10px;height:10px;}
+#viewport::-webkit-scrollbar-track{background:#e0dbd2;}
+#viewport::-webkit-scrollbar-thumb{background:#b8b0a4;border-radius:5px;border:2px solid #e0dbd2;}
+#viewport::-webkit-scrollbar-thumb:hover{background:#a09080;}
+#viewport::-webkit-scrollbar-corner{background:#e0dbd2;}
+
+#canvasWrap{
+  display:inline-flex;
+  min-width:100%;min-height:100%;
+  align-items:center;justify-content:center;
+  box-sizing:border-box;
+}
+
+#emptyHint{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;pointer-events:none;
+  font-family:'JetBrains Mono',monospace;font-size:12px;color:#b0a898;letter-spacing:1px;
+}
+#emptyHint .big{font-size:48px;opacity:.25;}
+
+#procOverlay{
+  position:absolute;inset:0;display:none;
+  align-items:center;justify-content:center;
+  background:rgba(240,237,232,.85);z-index:50;
+  flex-direction:column;gap:14px;
+  font-family:'JetBrains Mono',monospace;font-size:12px;color:#7a6a55;letter-spacing:1px;
+}
+#procOverlay.show{display:flex;}
+.spinner{
+  width:26px;height:26px;
+  border:2.5px solid #ddd8d0;border-top-color:#7a6a55;
+  border-radius:50%;animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+#coordBar{
+  position:absolute;bottom:8px;right:12px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:#a09080;
+  pointer-events:none;
+  background:rgba(255,255,255,.75);
+  padding:3px 8px;border-radius:3px;
+  border:1px solid #ddd8d0;
+}
+
+/* Polyline preview on overlay */
+.poly-dot{ position:absolute; }
+
+/* Export Modal */
+#exportModal{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,.45);
+  align-items:center;justify-content:center;
+}
+#exportModal.show{display:flex;}
+#exportModalBox{
+  background:#fff;border-radius:8px;
+  padding:22px 24px 18px;width:340px;
+  box-shadow:0 8px 32px rgba(0,0,0,.22);
+  font-family:'Inter',sans-serif;
+  display:flex;flex-direction:column;gap:14px;
+}
+#exportModalBox h3{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;font-weight:700;letter-spacing:1.5px;
+  text-transform:uppercase;color:#3a3530;margin:0;
+}
+.em-field{display:flex;flex-direction:column;gap:4px;}
+.em-field label{font-size:10px;font-weight:600;color:#8a8078;letter-spacing:.5px;text-transform:uppercase;}
+.em-field input{
+  padding:6px 8px;border:1px solid #d4cfc8;border-radius:5px;
+  font-size:12px;font-family:'JetBrains Mono',monospace;
+  color:#2c2a26;background:#f9f7f5;outline:none;transition:border-color .12s;
+}
+.em-field input:focus{border-color:#7a6a55;background:#fff;}
+.em-hint{font-size:9px;color:#b0a090;margin-top:1px;}
+#exportModalBtns{display:flex;gap:8px;justify-content:flex-end;margin-top:2px;}
+#exportModalBtns button{
+  padding:6px 16px;border-radius:5px;font-size:11px;font-weight:600;
+  font-family:'JetBrains Mono',monospace;cursor:pointer;border:1px solid;transition:all .12s;
+}
+#emBtnCancel{background:#f0ede8;border-color:#d4cfc8;color:#6a6058;}
+#emBtnCancel:hover{background:#e4e0da;}
+#emBtnSave{background:#2c5c3c;border-color:#1e4a2c;color:#d8f0e2;}
+#emBtnSave:hover{background:#1e4a2c;}
+
+</style>
+</head>
+<body>
+
+<div id="exportModal">
+  <div id="exportModalBox">
+    <h3>&#x2193; Export BMP</h3>
+    <div class="em-field">
+      <label>File Name</label>
+      <input id="emFileName" type="text" value="motif_export.bmp" spellcheck="false">
+    </div>
+    <div class="em-field">
+      <label>Save To Folder</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="emFolderPath" type="text" placeholder="Click Browse to select folder..." spellcheck="false" style="flex:1;">
+        <button id="emBtnBrowseFolder" style="padding:6px 10px;border-radius:5px;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;cursor:pointer;border:1px solid #d4cfc8;background:#eceae6;color:#3a3530;white-space:nowrap;flex-shrink:0;" title="Browse for folder">&#x1F4C2; Browse</button>
+        <input type="file" id="emFolderInput" webkitdirectory mozdirectory style="display:none;">
+      </div>
+      <span class="em-hint" id="emFolderHint">Folder path saved automatically for next time.</span>
+    </div>
+    <div id="exportModalBtns">
+      <button id="emBtnCancel">Cancel</button>
+      <button id="emBtnSave">Save</button>
+    </div>
+  </div>
+</div>
+<header>
+  <!-- Left: Logo + Title -->
+  <div style="display:flex;align-items:center;gap:7px;flex-shrink:0;">
+    <span style="font-size:16px;color:#7a6a55;line-height:1;">◈</span>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#3a3530;">Motif Analyzer</span>
+  </div>
+  <!-- Middle: Phase status -->
+  <div id="phaseStatus" style="flex:1;font-size:9px;font-family:'JetBrains Mono',monospace;color:#a09080;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 10px;"></div>
+  <!-- Right: Action buttons with icons -->
+  <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
+    <!-- Undo -->
+    <button class="abtn" id="btnUndo" disabled style="padding:4px 9px;font-size:9px;gap:5px;height:26px;">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h7a4 4 0 0 1 0 8H6"/><polyline points="2 2 2 6 6 6"/></svg>
+      Undo
+    </button>
+    <!-- Redo -->
+    <button class="abtn" id="btnRedo" disabled style="padding:4px 9px;font-size:9px;gap:5px;height:26px;">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6H7a4 4 0 0 0 0 8h3"/><polyline points="14 2 14 6 10 6"/></svg>
+      Redo
+    </button>
+    <!-- Separator -->
+    <div style="width:1px;height:18px;background:#d8d2c8;margin:0 2px;"></div>
+    <!-- Export -->
+    <button class="abtn" id="btnExport" style="padding:4px 9px;font-size:9px;gap:5px;height:26px;">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v9"/><polyline points="4 9 8 13 12 9"/><path d="M2 14h12"/></svg>
+      Export
+    </button>
+    <!-- Clear Fill -->
+    <button class="abtn warn" id="btnClearFill" style="padding:4px 9px;font-size:9px;gap:5px;height:26px;">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l1 8h8l1-8"/><path d="M1 6h14"/><path d="M6 6V3h4v3"/><line x1="6" y1="10" x2="10" y2="10"/></svg>
+      Clear Fill
+    </button>
+    <!-- Reset -->
+    <button class="abtn danger" id="btnReset" style="padding:4px 9px;font-size:9px;gap:5px;height:26px;">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a6 6 0 1 0 1.5-3.9"/><path d="M2 4v4h4"/></svg>
+      Reset
+    </button>
+  </div>
+</header>
+<div id="mainLayout">
+
+<!-- ══════════════ LEFT PANEL ══════════════ -->
+<div id="leftPanel">
+
+  <!-- Image -->
+  <div class="section">
+    <button class="browse-btn" id="btnMainUpload">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 2v9M4 5l4-3 4 3"/><path d="M2 13h12"/></svg>
+      Image
+    </button>
+    <input type="file" id="mainUploadInput" accept="image/*">
+  </div>
+
+  <!-- Bitmap -->
+  <div class="section">
+    <input type="file" id="libUploadInput" accept="image/*" multiple>
+    <div class="sec-title">Bitmap Library</div>
+    <div class="bmp-row">
+      <button class="browse-btn" id="btnLibUpload" style="gap:4px;">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 2v9M4 5l4-3 4 3"/><path d="M2 13h12"/></svg>
+        Browse
+      </button>
+      <button class="bmp-reload" id="btnBmpReload" title="Reload saved bitmaps">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a6 6 0 1 0 1.5-3.9"/><path d="M2 4v4h4"/></svg>
+      </button>
+    </div>
+
+    <!-- ── Layer 1 : Motif Detection Weave ── -->
+    <span class="flabel" style="margin-top:2px;">Motif Weave</span>
+    <div style="display:flex;gap:3px;align-items:center;">
+      <div class="thumb-dd" id="leftDD" style="flex:1;min-width:0;">
+        <div class="thumb-dd-trigger" id="leftDDTrigger" onclick="toggleThumbDD('left')">
+          <canvas class="thumb-dd-thumb" id="leftDDThumb"></canvas>
+          <span class="thumb-dd-label" id="leftDDLabel">None</span>
+          <span class="thumb-dd-arrow">▼</span>
+        </div>
+        <div class="thumb-dd-list" id="leftDDList"></div>
+      </div>
+      <canvas id="leftPreview" class="prevCv" style="display:none;width:30px;height:30px;"></canvas>
+    </div>
+    <span class="prev-lbl" id="leftName" style="display:none;max-width:100%;"></span>
+
+    <hr class="sec-div" style="margin:4px 0;">
+
+    <!-- ── Layer 2 : Fill Tool Weave (shown on top of motif weave) ── -->
+    <span class="flabel" style="margin-top:2px;">Fill Tool Weave</span>
+    <div style="display:flex;gap:3px;align-items:center;">
+      <div class="thumb-dd" id="fillToolDD" style="flex:1;min-width:0;">
+        <div class="thumb-dd-trigger" id="fillToolDDTrigger" onclick="toggleThumbDD('fillTool')">
+          <canvas class="thumb-dd-thumb" id="fillToolDDThumb"></canvas>
+          <span class="thumb-dd-label" id="fillToolDDLabel">— Select —</span>
+          <span class="thumb-dd-arrow">▼</span>
+        </div>
+        <div class="thumb-dd-list" id="fillToolDDList"></div>
+      </div>
+      <canvas id="fillToolPreview" class="prevCv" style="display:none;width:30px;height:30px;"></canvas>
+    </div>
+    <span class="prev-lbl" id="fillToolPreviewName" style="display:none;max-width:100%;"></span>
+
+    <canvas id="rightPreview" style="display:none;"></canvas>
+    <span id="rightName" style="display:none;"></span>
+    <canvas id="fillPreview" style="display:none;"></canvas>
+    <span id="fillPreviewName" style="display:none;"></span>
+  </div>
+
+  <!-- Fill -->
+  <div class="section">
+    <div class="sec-title">Fill</div>
+    <select id="borderMode" onchange="applyPhase1();redraw()">
+      <option value="WHOLE">Whole</option>
+      <option value="INNER" selected>Inside</option>
+      <option value="BORDER">Border</option>
+      <option value="BORDER8">Vert Border ≥</option>
+      <option value="INNER_BORDER8">Inside + Vert</option>
+    </select>
+    <div class="row-inline">
+      <span class="flabel">Len</span>
+      <input type="number" id="vBorderLen" class="num-input" value="8" min="1" max="999"
+             oninput="redraw()" onchange="applyPhase1();redraw()">
+    </div>
+    <label class="chk-row">
+      <input type="checkbox" id="chkConnected" checked onchange="reanalyse()">
+      <span>8-Connected</span>
+    </label>
+    <hr class="sec-div">
+    <div class="float-row">
+      <label class="chk-row">
+        <input type="checkbox" id="chkBndSkip">
+        <span>Bnd Skip</span>
+      </label>
+      <input type="number" id="bndSkipPx" class="num-input" value="1" min="0" max="99" title="Boundary pixels to skip inward">
+    </div>
+    <hr class="sec-div">
+    <div class="float-row">
+      <label class="chk-row">
+        <input type="checkbox" id="chkVertFloat" onchange="redraw()">
+        <span>Float Fill</span>
+      </label>
+      <input type="number" id="vertFloatLen" class="num-input" value="8" min="1" max="9999"
+             oninput="redraw()" onchange="redraw()">
+    </div>
+    <div id="floatCountBar" style="font-size:7px;color:#8a7a65;font-family:'JetBrains Mono',monospace;min-height:8px;"></div>
+  </div>
+
+  <!-- Tools -->
+  <div class="section">
+    <div class="sec-title">Tools</div>
+    <!-- Row 1: Move + Switch -->
+    <div class="tool-row">
+      <button class="tool-btn active" id="toolMove" onclick="setTool('move')" title="Move / Pan">
+        <img src="data:image/png;base64,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" style="width:18px;height:18px;object-fit:contain;display:block;">
+      </button>
+      <button class="tool-btn" id="toolSwitch" onclick="setTool('switch')" title="Switch fill direction L↔R">
+        <img src="data:image/png;base64,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" style="width:18px;height:18px;object-fit:contain;display:block;">
+      </button>
+    </div>
+    <!-- Row 2: Erase + PolyErase -->
+    <div class="tool-row" style="margin-top:2px;">
+      <button class="tool-btn" id="toolErase" onclick="setTool('erase')" title="Click motif to erase fill">
+        <img src="data:image/png;base64,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" style="width:18px;height:18px;object-fit:contain;display:block;">
+      </button>
+      <button class="tool-btn" id="toolPoly" onclick="setTool('polyline')" title="Draw polygon to erase area">
+        <img src="data:image/png;base64,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" style="width:18px;height:18px;object-fit:contain;display:block;">
+      </button>
+    </div>
+    <!-- Row 3: Fill + Pen -->
+    <div class="tool-row" style="margin-top:2px;">
+      <button class="tool-btn" id="toolFill" onclick="setTool('fill')" title="Click area to flood-fill with bitmap">
+        <img src="data:image/png;base64,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" style="width:18px;height:18px;object-fit:contain;display:block;">
+      </button>
+      <button class="tool-btn" id="toolPen" onclick="setTool('pen')" title="Pen — draw with selected color">
+        <img src="data:image/png;base64,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" style="width:18px;height:18px;object-fit:contain;display:block;">
+      </button>
+    </div>
+    <!-- Pen color row -->
+    <div class="float-row" style="margin-top:3px;align-items:center;gap:4px;">
+      <div id="penColorSwatch"
+           onclick="document.getElementById('penColorPicker').click()"
+           title="Left-click color — right-click restores original"
+           style="width:18px;height:18px;border-radius:3px;border:2px solid #555;cursor:pointer;background:#000000;flex-shrink:0;"></div>
+      <span class="flabel" style="flex:1;">Pen Color</span>
+      <input type="color" id="penColorPicker" value="#000000"
+             oninput="updatePenColor('left',this.value)"
+             style="width:0;height:0;opacity:0;position:absolute;pointer-events:none;">
+    </div>
+  </div>
+
+  <!-- Highlight Float -->
+  <div class="section">
+    <div class="sec-title">Highlight Float</div>
+    <div class="float-row">
+      <label class="chk-row">
+        <input type="checkbox" id="chkHighlight" onchange="toggleHighlight()">
+        <span>Highlight Float</span>
+      </label>
+      <input type="number" id="highlightLen" class="num-input" value="8" min="1" max="999"
+             oninput="if(document.getElementById('chkHighlight').checked) refreshHighlight()"
+             onchange="if(document.getElementById('chkHighlight').checked) refreshHighlight()">
+    </div>
+    <div class="float-row" style="margin-top:3px;display:none;">
+      <span class="flabel">Color</span>
+      <input type="color" id="highlightColor" value="#ff0000"
+             style="display:none;">
+    </div>
+    <button class="abtn" id="btnScanHighlight" onclick="refreshHighlight()" style="margin-top:2px;font-size:8.5px;display:none;">⟳ Re-Scan</button>
+  </div>
+
+
+
+  <!-- Logo -->
+  <div style="margin-top:auto;padding:6px 0 4px;display:flex;justify-content:center;border-top:1px solid #e4dfd8;">
+    <img src="data:image/png;base64,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" 
+         style="width:130px;height:auto;opacity:0.88;display:block;" 
+         alt="By Bhagya Lakshmi and Devi Priya">
+  </div>
+</div><!-- end leftPanel -->
+
+<!-- ══════════════ RIGHT PANEL ══════════════ -->
+<div id="rightPanel">
+  <div id="zoomStrip">
+    <button class="zs-btn" id="zoomOut">−</button>
+    <span id="zoomBadge">100%</span>
+    <button class="zs-btn" id="zoomIn">+</button>
+    <button class="zs-btn" id="zoom1" style="font-size:10px;">1:1</button>
+    <button class="zs-btn" id="zoomFit" style="font-size:10px;">FIT</button>
+  </div>
+
+  <div id="emptyHint">
+    <div class="big">◈</div>
+    <div>Upload an image to begin</div>
+  </div>
+  <div id="procOverlay">
+    <div class="spinner"></div>
+    <div id="procMsg">Processing motifs…</div>
+  </div>
+  <div id="viewport">
+    <div id="canvasWrap">
+      <div id="canvasContainer">
+        <canvas id="canvas"></canvas>
+        <canvas id="overlayCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+  <div id="coordBar">x:— y:—</div>
+</div>
+
+</div><!-- end mainLayout -->
+
+<script>
+// ══════════════════════════════════════
+//  GLOBALS
+// ══════════════════════════════════════
+const canvas    = document.getElementById('canvas');
+const ctx       = canvas.getContext('2d', { willReadFrequently: true });
+const overlayCanvas = document.getElementById('overlayCanvas');
+const octx      = overlayCanvas.getContext('2d');
+octx.imageSmoothingEnabled = true;
+const viewport  = document.getElementById('viewport');
+
+let originalImage   = null;
+let processedImage  = null;   // originalImage + motif fills + manual fills (displayed)
+let motifOnlyImage  = null;   // originalImage + motif fills only (used as flood-fill base)
+let motifResults    = [];
+let leftImg  = null;
+let rightImg = null;
+let scale = 4;
+const MAX_SCALE = 32;
+
+let leftFillCache  = null;
+let rightFillCache = null;
+
+// ── Fill Tool has its own separate weave bitmap (Layer 2, on top of motif layer) ──
+let fillToolImg          = null;
+let fillToolCache        = null;
+let fillToolCacheFlipped = null;   // Horizontal flip of fillToolCache — Switch tool ke liye
+
+// Tool state
+let activeTool  = 'move';
+let polyPoints  = [];       // for polyline/polyfill tools
+let polyMousePt = null;
+let erasedSet   = new Set();
+let manualFillRegions = [];  // [{pixelSet:Set<"x,y">, pixels:[{x,y,r,g,b}], side}]
+let bakedFloatRegions = []; // [{motif:m, pixelSet, pixels, cacheNormal, cacheFlipped, isFillTool, side}]
+let allMotifPixelSet = new Set();
+
+// ── Pen tool state ──
+let penEdits    = new Map();  // "x,y" → {r,g,b} — non-destructive pen layer
+let _penPainting = false;
+let _penButton   = 0;
+let _penColor    = {r:0, g:0, b:0};      // left-click color (default black)
+
+// ── Highlight Float state ──
+let highlightFloatActive = false;
+let highlightPixelSet    = new Set();
+
+// ── Undo / Redo ──
+const MAX_HISTORY = 10;
+let _undoStack = [];   // array of snapshots (oldest→newest)
+let _redoStack = [];   // snapshots undone
+
+const bitmapLibrary = [];
+
+// ── Built-in default bitmaps (always available, no file browsing needed) ──
+const BUILTIN_BITMAPS = [
+  { name:"Left_Weave.bmp", b64:"data:image/bmp;base64,Qk12BAAAAAAAADYEAAAoAAAACAAAAAgAAAABAAgAAAAAAEAAAABfHwAAXx8AAAAAAAAAAAAA////AAAAAADAwMAA5WwBAJUA/gD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AAIBAQQCAQEDAwIBAQQCAQEBAwIBAQQCAQEBAwIBAQQCAgEBAwIBAQQEAgEBAwIBAQEEAgEBAwIBAQEEAgEBAwI=" },
+  { name:"Right_Weave.bmp", b64:"data:image/bmp;base64,Qk12BAAAAAAAADYEAAAoAAAACAAAAAgAAAABAAgAAAAAAEAAAABfHwAAXx8AAAAAAAAAAAAA////AAAAAADAwMAA5WwBAJUA/gD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AAMBAQIEAQECAQECBAEBAgMBAgQBAQIDAQIEAQECAwEBBAEBAgMBAQIBAQIDAQECBAECAwEBAgQBAgMBAQIEAQE=" },
+  { name:"Satin.bmp", b64:"data:image/bmp;base64,Qk1SAAAAAAAAAD4AAAAoAAAABQAAAAUAAAABAAEAAAAAABQAAAASFwAAEhcAAAAAAAAAAAAAAAAAAP///wCAAQEBIQEAAQkBAQFBAAEBEQEBAA==" },
+  { name:"TWILL-1.bmp", b64:"data:image/bmp;base64,Qk1OAAAAAAAAAD4AAAAoAAAABAAAAAQAAAABAAEAAAAAABAAAAASFwAAEhcAAAAAAAAAAAAAAAAAAP///wCAAQEBQQABASEBAAERAQEA" },
+  { name:"TWILL-2.bmp", b64:"data:image/bmp;base64,Qk1OAAAAAAAAAD4AAAAoAAAABAAAAAQAAAABAAEAAAAAABAAAAASFwAAEhcAAAAAAAAAAAAAAAAAAP///wARAQEAIQEAAUEAAQGAAQEB" },
+];
+
+// Load built-in bitmaps into library immediately (marked builtin:true so they survive clears)
+function loadBuiltinBitmaps(){
+  let pending = BUILTIN_BITMAPS.length;
+  for(const {name, b64} of BUILTIN_BITMAPS){
+    const img = new Image();
+    img.onload = ()=>{
+      bitmapLibrary.push({name, img, builtin:true});
+      if(--pending === 0) refreshDropdowns();
+    };
+    img.onerror = ()=>{ if(--pending === 0) refreshDropdowns(); };
+    img.src = b64;
+  }
+}
+
+const leftPrevCv   = document.getElementById('leftPreview');
+const leftPrevCtx  = leftPrevCv.getContext('2d', { willReadFrequently: true });
+const rightPrevCv  = document.getElementById('rightPreview');
+const rightPrevCtx = rightPrevCv.getContext('2d', { willReadFrequently: true });
+
+// ══════════════════════════════════════
+//  UNDO / REDO ENGINE
+// ══════════════════════════════════════
+function _cloneState(){
+  return {
+    processedImage : processedImage  ? new ImageData(new Uint8ClampedArray(processedImage.data),  processedImage.width,  processedImage.height)  : null,
+    motifOnlyImage : motifOnlyImage  ? new ImageData(new Uint8ClampedArray(motifOnlyImage.data),  motifOnlyImage.width,  motifOnlyImage.height)  : null,
+    erasedSet      : new Set(erasedSet),
+    manualFillRegions : manualFillRegions.map(r=>({
+      pixelSet : new Set(r.pixelSet),
+      pixels   : r.pixels.slice(),
+      side     : r.side || 'LEFT'
+    })),
+    bakedFloatRegions : bakedFloatRegions.map(r=>({
+      motif        : r.motif,
+      pixelSet     : new Set(r.pixelSet),
+      pixels       : r.pixels.slice(),
+      cache        : r.cache,
+      cacheNormal  : r.cacheNormal,
+      cacheFlipped : r.cacheFlipped,
+      isFillTool   : r.isFillTool || false,
+      side         : r.side || 'LEFT'
+    })),
+    motifSides : motifResults.map(m=>m.side),
+    penEdits   : new Map(penEdits),
+  };
+}
+
+function _restoreState(snap){
+  processedImage    = snap.processedImage;
+  motifOnlyImage    = snap.motifOnlyImage;
+  erasedSet         = snap.erasedSet;
+  manualFillRegions = snap.manualFillRegions;
+  bakedFloatRegions = snap.bakedFloatRegions || [];
+  snap.motifSides.forEach((s,i)=>{ if(motifResults[i]) motifResults[i].side=s; });
+  penEdits = snap.penEdits || new Map();
+}
+
+// Call pushUndo() BEFORE any destructive operation
+function pushUndo(){
+  _undoStack.push(_cloneState());
+  if(_undoStack.length > MAX_HISTORY) _undoStack.shift();
+  _redoStack = [];          // any new action clears redo branch
+  _updateUndoButtons();
+}
+
+function undo(){
+  if(!_undoStack.length) return;
+  _redoStack.push(_cloneState());
+  _restoreState(_undoStack.pop());
+  redraw();
+  _updateUndoButtons();
+  setStatus('Undo', '');
+}
+
+function redo(){
+  if(!_redoStack.length) return;
+  _undoStack.push(_cloneState());
+  _restoreState(_redoStack.pop());
+  redraw();
+  _updateUndoButtons();
+  setStatus('Redo', '');
+}
+
+function _updateUndoButtons(){
+  const bu = document.getElementById('btnUndo');
+  const br = document.getElementById('btnRedo');
+  if(bu) bu.disabled = _undoStack.length === 0;
+  if(br) br.disabled = _redoStack.length === 0;
+}
+
+// ══════════════════════════════════════
+//  INDEXED-DB  — persist bitmap file handles across page reloads
+// ══════════════════════════════════════
+const IDB_NAME    = 'MotifAnalyzer';
+const IDB_STORE   = 'bitmapHandles';
+const IDB_KEY     = 'savedHandles';
+let   _db         = null;
+
+function openDB(){
+  return new Promise((res, rej)=>{
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(IDB_STORE);
+    req.onsuccess = e => { _db = e.target.result; res(_db); };
+    req.onerror   = e => rej(e);
+  });
+}
+async function idbSaveHandles(handles){
+  if(!_db) await openDB();
+  return new Promise((res,rej)=>{
+    const tx = _db.transaction(IDB_STORE,'readwrite');
+    tx.objectStore(IDB_STORE).put(handles, IDB_KEY);
+    tx.oncomplete = res; tx.onerror = rej;
+  });
+}
+async function idbLoadHandles(){
+  if(!_db) await openDB();
+  return new Promise((res,rej)=>{
+    const tx = _db.transaction(IDB_STORE,'readonly');
+    const req = tx.objectStore(IDB_STORE).get(IDB_KEY);
+    req.onsuccess = e => res(e.target.result || []);
+    req.onerror   = rej;
+  });
+}
+
+// ── On page load: load built-in bitmaps + auto-restore saved bitmap file handles ──
+window.addEventListener('load', async ()=>{
+  // Always load built-in bitmaps first
+  loadBuiltinBitmaps();
+  if(!window.FileSystemFileHandle){ updateBmpStoredInfo(false); return; }
+  try{
+    await openDB();
+    const saved = await idbLoadHandles();
+    if(!saved || !saved.length){ updateBmpStoredInfo(false); return; }
+    // Check how many are already granted (no prompt)
+    let accessible = 0;
+    for(const fh of saved){
+      try{
+        const perm = await fh.queryPermission({mode:'read'});
+        if(perm === 'granted') accessible++;
+      } catch(_){}
+    }
+    if(accessible > 0){
+      document.getElementById('btnBmpReload').classList.add('has-saved');
+      updateBmpStoredInfo(true, saved.length);
+      // Auto-load them silently — no click needed
+      await _autoLoadHandles(saved);
+    } else {
+      // Files exist but need re-grant; show hint only
+      updateBmpStoredInfo(false, saved.length);
+    }
+  } catch(e){
+    updateBmpStoredInfo(false);
+  }
+});
+
+async function _autoLoadHandles(saved){
+  // Remove only user-added entries; builtin:true entries always stay
+  for(let i = bitmapLibrary.length-1; i >= 0; i--){
+    if(!bitmapLibrary[i].builtin) bitmapLibrary.splice(i, 1);
+  }
+  let pending = 0, loaded = 0;
+  for(const fh of saved){
+    try{
+      const perm = await fh.queryPermission({mode:'read'});
+      if(perm !== 'granted') continue;
+      pending++;
+      const file = await fh.getFile();
+      const url  = URL.createObjectURL(file);
+      const img  = new Image();
+      img.onload = ()=>{
+        bitmapLibrary.push({name:file.name, img});
+        loaded++;
+        if(loaded === pending){ refreshDropdowns(); updateBmpStoredInfo(true, saved.length); }
+      };
+      img.onerror = ()=>{ if(++loaded >= pending) refreshDropdowns(); };
+      img.src = url;
+    } catch(_){}
+  }
+}
+
+function updateBmpStoredInfo(hasAccess, count){
+  const btn = document.getElementById('btnBmpReload');
+  if(!btn) return;
+  if(hasAccess && count > 0){
+    btn.classList.add('has-saved');
+    btn.title = `${count} bitmap(s) saved — click to reload`;
+  } else if(count > 0){
+    btn.classList.remove('has-saved');
+    btn.title = `${count} saved — click to re-grant access`;
+  } else {
+    btn.classList.remove('has-saved');
+    btn.title = 'Reload saved bitmaps';
+  }
+}
+
+async function reloadSavedBitmaps(){
+  if(!window.FileSystemFileHandle){ alert('File System API not supported'); return; }
+  try{
+    const saved = await idbLoadHandles();
+    if(!saved || !saved.length){ alert('No saved bitmaps. Use Browse first.'); return; }
+    let pending = 0, loaded = 0;
+    // Remove only user-added entries; builtin:true entries always stay
+    for(let i = bitmapLibrary.length-1; i >= 0; i--){
+      if(!bitmapLibrary[i].builtin) bitmapLibrary.splice(i, 1);
+    }
+    for(const fh of saved){
+      try{
+        // Request permission if needed
+        const perm = await fh.requestPermission({mode:'read'});
+        if(perm !== 'granted') continue;
+        pending++;
+        const file = await fh.getFile();
+        const url  = URL.createObjectURL(file);
+        const img  = new Image();
+        img.onload = ()=>{
+          bitmapLibrary.push({ name: file.name, img });
+          loaded++;
+          if(loaded === pending) { refreshDropdowns(); updateBmpStoredInfo(true, saved.length); }
+        };
+        img.onerror = ()=>{ if(++loaded >= pending) { refreshDropdowns(); } };
+        img.src = url;
+      } catch(_){}
+    }
+    if(pending === 0){ alert('Could not access any saved files. Please Browse again.'); }
+  } catch(e){
+    console.error(e);
+  }
+}
+
+// ══════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════
+function setStatus(msg, cls=''){
+  const s = document.getElementById('statusBar');
+  if(s){ s.textContent = msg; s.className = cls; }
+}
+function showProc(msg='Processing…'){
+  document.getElementById('procMsg').textContent = msg;
+  document.getElementById('procOverlay').classList.add('show');
+}
+function hideProc(){
+  document.getElementById('procOverlay').classList.remove('show');
+}
+function buildFillCache(img){
+  if(!img||!img.width) return null;
+  const oc = document.createElement('canvas');
+  oc.width = img.width; oc.height = img.height;
+  const ox = oc.getContext('2d',{willReadFrequently:true});
+  ox.imageSmoothingEnabled = false;
+  ox.drawImage(img,0,0);
+  const id = ox.getImageData(0,0,img.width,img.height);
+  return {data:id.data, w:img.width, h:img.height};
+}
+function buildFillCacheFlipped(cache){
+  if(!cache) return null;
+  const {data:src, w, h} = cache;
+  const out = new Uint8ClampedArray(w * h * 4);
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+    const si = (y*w+(w-1-x))*4, di=(y*w+x)*4;
+    out[di]=src[si]; out[di+1]=src[si+1]; out[di+2]=src[si+2]; out[di+3]=src[si+3];
+  }
+  return {data:out, w, h};
+}
+function escHTML(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════
+//  TOOL SYSTEM
+// ══════════════════════════════════════
+const TOOL_HINTS = {
+  move    : 'Drag to pan canvas',
+  erase   : 'Click motif to erase fill  •  Right-click to restore',
+  switch  : '',
+  polyline: 'Click to add points  •  Double-click / Enter to close & erase',
+  fill    : 'Click any pixel to flood-fill with selected bitmap',
+  pen     : 'Left-drag: paint white  •  Right-drag: paint black',
+};
+
+const TOOL_IDS = ['toolMove','toolSwitch','toolErase','toolPoly','toolFill','toolPen'];
+const TOOL_KEYS = { move:'toolMove', switch:'toolSwitch', erase:'toolErase', polyline:'toolPoly', fill:'toolFill', pen:'toolPen' };
+
+function setTool(t){
+  activeTool  = t;
+  polyPoints  = [];
+  polyMousePt = null;
+  clearOverlay();
+  if(t !== 'polyline') redraw();
+
+  const isEditTool  = (t === 'erase' || t === 'switch' || t === 'fill');
+  const isPolyTool  = (t === 'polyline');
+  const isPenTool   = (t === 'pen');
+
+  TOOL_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('active');
+  });
+  const activeId = TOOL_KEYS[t];
+  if(activeId){
+    const el = document.getElementById(activeId);
+    if(el) el.classList.add('active');
+  }
+  // Move also stays highlighted when an edit/poly tool is active
+  if(isEditTool || isPolyTool || isPenTool){
+    const mv = document.getElementById('toolMove');
+    if(mv) mv.classList.add('active');
+  }
+
+  // Pen: overlayCanvas pointer events auto so it receives mouse, cursor=crosshair
+  overlayCanvas.style.pointerEvents = (isEditTool || isPolyTool || isPenTool) ? 'auto' : 'none';
+  overlayCanvas.style.cursor =
+    t === 'erase'    ? 'crosshair' :
+    t === 'switch'   ? 'pointer'   :
+    t === 'fill'     ? 'cell'      :
+    t === 'pen'      ? 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 16 16\'%3E%3Cpath d=\'M12 1l3 3-9 9H3v-3L12 1z\' fill=\'%23333\' stroke=\'%23fff\' stroke-width=\'0.5\'/%3E%3C/svg%3E") 0 16, crosshair' :
+    (isPolyTool)     ? 'crosshair' : 'default';
+  viewport.style.cursor = (t === 'move' || isEditTool || isPolyTool || isPenTool) ? 'grab' : 'crosshair';
+  _panDragging = false;
+}
+
+// ── Overlay helpers ──
+function syncOverlay(){
+  overlayCanvas.width  = canvas.width;
+  overlayCanvas.height = canvas.height;
+}
+function clearOverlay(){
+  octx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
+  if(highlightFloatActive && highlightPixelSet.size) _drawHighlightOverlay();
+}
+
+// ══════════════════════════════════════
+//  HIGHLIGHT FLOAT
+// ══════════════════════════════════════
+function _computeHighlightPixels(data, w, h, minLen){
+  const result = new Set();
+  for(let x=0; x<w; x++){
+    let runStart = -1;
+    for(let y=0; y<=h; y++){
+      let isBlack = false;
+      if(y < h){
+        // Pen-edited pixels always break the float run — regardless of their color
+        if(penEdits.has(x+','+y)){
+          isBlack = false; // pen edit = float break
+        } else {
+          const i=(y*w+x)*4;
+          isBlack = (data[i]+data[i+1]+data[i+2])/3 < 128;
+        }
+      }
+      if(isBlack){
+        if(runStart < 0) runStart = y;
+      } else {
+        if(runStart >= 0){
+          if(y - runStart >= minLen){
+            for(let ry=runStart; ry<y; ry++) result.add(x+','+ry);
+          }
+          runStart = -1;
+        }
+      }
+    }
+  }
+  return result;
+}
+
+function _drawHighlightOverlay(){
+  if(!highlightPixelSet.size) return;
+  const w=overlayCanvas.width, h=overlayCanvas.height;
+  // Parse hex color from picker
+  const hex = (document.getElementById('highlightColor')||{value:'#ff003c'}).value;
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  const imgData = octx.createImageData(w, h);
+  const d = imgData.data;
+  for(const key of highlightPixelSet){
+    const [x,y]=key.split(',').map(Number);
+    if(x<0||x>=w||y<0||y>=h) continue;
+    const i=(y*w+x)*4;
+    d[i]=255; d[i+1]=0; d[i+2]=0; d[i+3]=255; // RGB(255,0,0) fully opaque red
+  }
+  octx.putImageData(imgData,0,0);
+}
+
+function toggleHighlight(){
+  highlightFloatActive = document.getElementById('chkHighlight').checked;
+  if(highlightFloatActive) refreshHighlight();
+  else { highlightPixelSet.clear(); clearOverlay(); }
+}
+
+function refreshHighlight(){
+  if(!originalImage) return;
+  const hlLen = Math.max(1, parseInt(document.getElementById('highlightLen').value)||1);
+  // Scan current canvas (after all fills + pen edits)
+  const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+  highlightPixelSet = _computeHighlightPixels(data, canvas.width, canvas.height, hlLen);
+  clearOverlay();
+}
+
+// ══════════════════════════════════════
+//  PEN TOOL
+// ══════════════════════════════════════
+function updatePenColor(side, hex){
+  const r=parseInt(hex.slice(1,3),16);
+  const g=parseInt(hex.slice(3,5),16);
+  const b=parseInt(hex.slice(5,7),16);
+  _penColor = {r,g,b};
+  const sw = document.getElementById('penColorSwatch');
+  if(sw) sw.style.background = hex;
+}
+
+function penPaintAt(cx, cy, button){
+  if(!originalImage) return;
+  const w=canvas.width, h=canvas.height;
+  if(cx<0||cx>=w||cy<0||cy>=h) return;
+  pushUndo();
+  if(button===2){
+    // Right-click = remove pen edit → original pixel restored, float run re-evaluates
+    penEdits.delete(cx+','+cy);
+  } else {
+    // Left-click = draw selected color, pen edit breaks the float run
+    penEdits.set(cx+','+cy, {r:_penColor.r, g:_penColor.g, b:_penColor.b});
+  }
+  redraw();
+}
+
+// ══════════════════════════════════════
+//  ERASE TOOL  (click to erase/restore a motif)
+// ══════════════════════════════════════
+function eraseMotifAt(cx, cy, restore){
+  const clickKey = cx+','+cy;
+  let found = false;
+
+  // 1) Motif fills (Phase 1) — erase/restore
+  for(const m of motifResults){
+    if(m.borderSet.has(clickKey) || m.pixelSet.has(clickKey)){
+      pushUndo();
+      if(restore){
+        for(const p of m.pixels) erasedSet.delete(p.x+','+p.y);
+      } else {
+        for(const p of m.pixels) erasedSet.add(p.x+','+p.y);
+        // Usi motif ke pixelSet se overlapping manualFillRegions bhi hataao
+        manualFillRegions = manualFillRegions.filter(region => {
+          for(const key of m.pixelSet){ if(region.pixelSet.has(key)) return false; }
+          return true;
+        });
+        // Usi motif ke overlapping bakedFloatRegions bhi hataao
+        bakedFloatRegions = bakedFloatRegions.filter(region => {
+          for(const key of m.pixelSet){ if(region.pixelSet.has(key)) return false; }
+          return true;
+        });
+      }
+      found = true; break;
+    }
+  }
+
+  // 2) Fill Tool fills (manualFillRegions)
+  if(!found){
+    for(let i = manualFillRegions.length-1; i >= 0; i--){
+      const region = manualFillRegions[i];
+      if(region.pixelSet.has(clickKey)){
+        pushUndo();
+        if(!restore){
+          manualFillRegions.splice(i, 1);
+          // Linked isFillTool bakedFloatRegions bhi hataao
+          // (outer float pixels motif ke bahar hote hain — click se seedha nahi milte)
+          bakedFloatRegions = bakedFloatRegions.filter(bfr => {
+            if(!bfr.isFillTool) return true;
+            const [smallSet, bigSet] =
+              bfr.motif.pixelSet.size < region.pixelSet.size
+                ? [bfr.motif.pixelSet, region.pixelSet]
+                : [region.pixelSet, bfr.motif.pixelSet];
+            for(const key of smallSet){
+              if(bigSet.has(key)){
+                for(const k of bfr.pixelSet) erasedSet.add(k);
+                return false;
+              }
+            }
+            return true;
+          });
+        }
+        found = true; break;
+      }
+    }
+  }
+
+  // 3) Baked Float Fill regions — erase/restore
+  if(!found){
+    for(let i = bakedFloatRegions.length-1; i >= 0; i--){
+      const region = bakedFloatRegions[i];
+      if(region.pixelSet.has(clickKey)){
+        pushUndo();
+        if(restore){
+          // Restore: remove these pixels from erasedSet
+          for(const key of region.pixelSet){
+            const [x,y] = key.split(',').map(Number);
+            erasedSet.delete(x+','+y);
+          }
+        } else {
+          // Erase: add these pixels to erasedSet
+          for(const key of region.pixelSet){
+            const [x,y] = key.split(',').map(Number);
+            erasedSet.add(x+','+y);
+          }
+        }
+        found = true; break;
+      }
+    }
+  }
+
+  if(!found) return;
+  if(processedImage) applyPhase1();
+  redraw();
+}
+
+// ══════════════════════════════════════
+//  SWITCH TOOL
+// ══════════════════════════════════════
+function switchMotifAt(cx,cy){
+  const clickKey = cx+','+cy;
+
+  // ── 0) PEHLE: manualFillRegion check ──
+  for(let i=manualFillRegions.length-1; i>=0; i--){
+    const region = manualFillRegions[i];
+    if(!region.pixelSet.has(clickKey)) continue;
+
+    pushUndo();
+    const newSide = (region.side === 'RIGHT') ? 'LEFT' : 'RIGHT';
+    region.side   = newSide;
+
+    // ── Linked isFillTool bakedFloatRegions bhi same newSide pe set karo ──
+    // isFillTool=true regions = jo fillToolCache se bake hue the (manual fill ke adjacent)
+    // Inhe manualFillRegion ke saath switch karo
+    for(const bfr of bakedFloatRegions){
+      if(!bfr.isFillTool) continue;
+      // Check: bfr.motif.pixelSet aur manualRegion.pixelSet overlap?
+      const [smallSet, bigSet] =
+        bfr.motif.pixelSet.size < region.pixelSet.size
+          ? [bfr.motif.pixelSet, region.pixelSet]
+          : [region.pixelSet, bfr.motif.pixelSet];
+      let linked = false;
+      for(const key of smallSet){ if(bigSet.has(key)){ linked=true; break; } }
+      if(linked) bfr.side = newSide;
+    }
+
+    if(processedImage) applyPhase1();
+    redraw(); return;
+  }
+
+  // 1) Direct motif pixelSet check
+  for(const m of motifResults){
+    if(m.borderSet.has(clickKey) || m.pixelSet.has(clickKey)){
+      pushUndo();
+      m.side = m.side==='LEFT' ? 'RIGHT' : 'LEFT';
+      // isFillTool=false (motif weave) float regions bhi switch karo
+      for(const bfr of bakedFloatRegions){
+        if(bfr.isFillTool) continue;
+        if(bfr.motif === m) bfr.side = m.side;
+      }
+      applyPhase1();
+      redraw(); return;
+    }
+  }
+
+  // 2) Baked float region check — click directly on float pixel
+  for(const region of bakedFloatRegions){
+    if(!region.pixelSet.has(clickKey)) continue;
+    pushUndo();
+    if(region.isFillTool){
+      // fillTool float → toggle this region AND its linked manualFillRegion
+      const newSide = (region.side==='RIGHT') ? 'LEFT' : 'RIGHT';
+      region.side = newSide;
+      for(const mfr of manualFillRegions){
+        const [s,b] = region.motif.pixelSet.size < mfr.pixelSet.size
+          ? [region.motif.pixelSet, mfr.pixelSet] : [mfr.pixelSet, region.motif.pixelSet];
+        let linked=false; for(const k of s){ if(b.has(k)){linked=true;break;} }
+        if(linked) mfr.side = newSide;
+      }
+      // Also toggle other isFillTool bfr on same motif
+      for(const bfr of bakedFloatRegions){
+        if(bfr!==region && bfr.isFillTool && bfr.motif===region.motif) bfr.side=newSide;
+      }
+    } else {
+      // motif float → toggle motif side AND non-fillTool bfr on same motif
+      const m = region.motif;
+      m.side = m.side==='LEFT' ? 'RIGHT' : 'LEFT';
+      for(const bfr of bakedFloatRegions){
+        if(!bfr.isFillTool && bfr.motif===m) bfr.side = m.side;
+      }
+    }
+    if(processedImage) applyPhase1();
+    redraw(); return;
+  }
+}
+
+// ══════════════════════════════════════
+//  FILL TOOL
+//  Strategy:
+//  1. Check if click lands inside a known motif's pixelSet
+//     → If YES: use that motif's pixels as the fill region (no flood needed — exact boundary)
+//     → If NO:  fall back to color-based BFS flood on originalImage
+//  2. Apply Fill Mode filter (Whole / Inside / Border / Vert etc.)
+//     Border detection respects the 8-Connected checkbox.
+//  3. If "Bnd Skip" is ON: erode the fill set inward by N pixel layers
+//  4. Store region and redraw
+// ══════════════════════════════════════
+function floodFillAt(cx, cy){
+  // Layer 2: Fill Tool uses fillToolCache (its own weave, or same as motif if not set)
+  const cache = fillToolCache || leftFillCache || rightFillCache;
+  if(!cache){ setStatus('Select a bitmap first', 'err'); return; }
+  const {data:fd, w:fw, h:fh} = cache;
+  const w = canvas.width, h = canvas.height;
+
+  // ── Read 8-Connected checkbox — used for flood BFS, border detection, and BndSkip erosion ──
+  const use8 = document.getElementById('chkConnected').checked;
+  const DIRS4 = [[1,0],[-1,0],[0,1],[0,-1]];
+  const DIRS8 = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+  const DIRS  = use8 ? DIRS8 : DIRS4;
+
+  // ── Step 1: Find motif under click, or fall back to flood ──
+  let filled = null;
+
+  // Check all motifs — use the one whose pixelSet contains the click point
+  const clickKey = cx+','+cy;
+  for(const m of motifResults){
+    if(m.pixelSet.has(clickKey)){
+      // Use exact motif pixels — no flood, no leaking
+      filled = m.pixels.slice();
+      break;
+    }
+  }
+
+  if(!filled){
+    // Fallback: color-based BFS on originalImage — direction set controlled by 8-Connected
+    const floodBase = originalImage.data;
+    const ti = (cy*w+cx)*4;
+    const tr = floodBase[ti], tg = floodBase[ti+1], tb = floodBase[ti+2];
+    const visited = new Uint8Array(w*h);
+    const queue = [cy*w+cx];
+    visited[cy*w+cx] = 1;
+    filled = [];
+    while(queue.length){
+      const p = queue.shift();
+      const x = p%w, y = Math.floor(p/w);
+      filled.push({x,y});
+      for(const [dx,dy] of DIRS){
+        const nx=x+dx, ny=y+dy;
+        if(nx<0||nx>=w||ny<0||ny>=h) continue;
+        const ni=ny*w+nx;
+        if(visited[ni]) continue;
+        visited[ni]=1;
+        const ii=ni*4;
+        if(Math.abs(floodBase[ii]-tr)<=30 && Math.abs(floodBase[ii+1]-tg)<=30 && Math.abs(floodBase[ii+2]-tb)<=30)
+          queue.push(ni);
+      }
+    }
+  }
+
+  if(!filled.length){ setStatus('Nothing to fill', 'err'); return; }
+
+  // ── Step 2: Apply Fill Mode filter ──
+  const mode = document.getElementById('borderMode').value;
+  const vLen = Math.max(1, parseInt(document.getElementById('vBorderLen').value) || 1);
+  const floodSet = new Set(filled.map(p => p.x+','+p.y));
+
+  // Border detection: respects 8-Connected checkbox
+  function isBorder(x,y){
+    if(use8){
+      // 8-connected: border if ANY of 8 neighbours is outside the filled set
+      for(const [dx,dy] of DIRS8){
+        if(!floodSet.has((x+dx)+','+(y+dy))) return true;
+      }
+      return false;
+    } else {
+      // 4-connected: border if any of 4 direct neighbours is outside
+      return !floodSet.has((x-1)+','+y) || !floodSet.has((x+1)+','+y) ||
+             !floodSet.has(x+','+(y-1)) || !floodSet.has(x+','+(y+1));
+    }
+  }
+
+  let paintPixels;
+  if(mode === 'WHOLE'){
+    paintPixels = filled.slice();
+  } else if(mode === 'INNER'){
+    paintPixels = filled.filter(({x,y}) => !isBorder(x,y));
+  } else if(mode === 'BORDER'){
+    paintPixels = filled.filter(({x,y}) => isBorder(x,y));
+  } else {
+    const borderPx = filled.filter(({x,y}) => isBorder(x,y));
+    const byCol = {};
+    for(const {x,y} of borderPx){ if(!byCol[x]) byCol[x]=[]; byCol[x].push(y); }
+    const vertKeep = [];
+    for(const xStr of Object.keys(byCol)){
+      const x=+xStr, ys=byCol[x].sort((a,b)=>a-b);
+      let i=0;
+      while(i<ys.length){
+        const run=[ys[i]];
+        while(i+1<ys.length && ys[i+1]===ys[i]+1){i++;run.push(ys[i]);}
+        if(run.length>=vLen) for(const y of run) vertKeep.push({x,y});
+        i++;
+      }
+    }
+    paintPixels = mode==='INNER_BORDER8'
+      ? filled.filter(({x,y})=>!isBorder(x,y)).concat(vertKeep)
+      : vertKeep;
+  }
+
+  // ── Step 3: Boundary Skip — erode paintPixels inward by N pixel layers ──
+  // Erosion also respects 8-Connected: uses same DIRS set
+  const doBndSkip = document.getElementById('chkBndSkip').checked;
+  const bndPx = Math.max(0, parseInt(document.getElementById('bndSkipPx').value) || 0);
+  if(doBndSkip && bndPx > 0 && paintPixels.length){
+    let currentSet = new Set(paintPixels.map(p=>p.x+','+p.y));
+    for(let iter=0; iter < bndPx; iter++){
+      const toRemove = new Set();
+      for(const key of currentSet){
+        const [x,y] = key.split(',').map(Number);
+        // Edge pixel: any neighbour (using DIRS) is outside currentSet
+        let onEdge = false;
+        for(const [dx,dy] of DIRS){
+          if(!currentSet.has((x+dx)+','+(y+dy))){ onEdge=true; break; }
+        }
+        if(onEdge) toRemove.add(key);
+      }
+      if(toRemove.size === currentSet.size) break;
+      for(const k of toRemove) currentSet.delete(k);
+    }
+    paintPixels = paintPixels.filter(p => currentSet.has(p.x+','+p.y));
+  }
+
+  if(!paintPixels.length){ setStatus('No pixels after boundary skip', 'err'); return; }
+
+  // ── Step 4: Push undo BEFORE mutating ──
+  pushUndo();
+
+  // ── Step 5: Remove overlapping existing fill regions ──
+  manualFillRegions = manualFillRegions.filter(region => {
+    for(const key of region.pixelSet){ if(floodSet.has(key)) return false; }
+    return true;
+  });
+
+  // ── Step 5b: Clear erasedSet entries for baked float pixels adjacent to the new fill area ──
+  // When a manual fill is erased, its linked isFillTool bakedFloat pixels are added to erasedSet.
+  // On refill we must un-erase those float pixels so float fill renders correctly again.
+  for(const bfr of bakedFloatRegions){
+    if(!bfr.isFillTool) continue;
+    // Check if this baked float region overlaps or is adjacent to the flood area
+    let linked = false;
+    for(const key of bfr.pixelSet){
+      if(floodSet.has(key)){ linked = true; break; }
+      // Also check adjacency (float pixels sit just outside the motif boundary)
+      const [x, y] = key.split(',').map(Number);
+      if(floodSet.has((x-1)+','+y) || floodSet.has((x+1)+','+y) ||
+         floodSet.has(x+','+(y-1)) || floodSet.has(x+','+(y+1))){ linked = true; break; }
+    }
+    if(linked){
+      for(const key of bfr.pixelSet) erasedSet.delete(key);
+    }
+  }
+  // Also clear any isFillTool-erased pixels that are simply within the flood region
+  for(const key of floodSet) erasedSet.delete(key);
+
+  // ── Step 6: Register new fill region ──
+  // pixelSet = floodSet (POORA clicked area) — Float Fill isko check karka Fill Tool zone jaanta hai
+  // pixels   = sirf painted pixels with colors — re-compositing ke liye
+  // Colors bake karo fill time pe — taaki baad mein bitmap change hone pe purane fills affect na ho
+  const newPixels = paintPixels.map(({x,y}) => {
+    const si = ((y%fh)*fw+(x%fw))*4;
+    return {x, y, r:fd[si], g:fd[si+1], b:fd[si+2]};
+  });
+  // Flipped version bhi bake karo — Switch tool ke liye
+  const flipCache = fillToolCacheFlipped || buildFillCacheFlipped(cache);
+  const {data:fdf, w:fwf, h:fhf} = flipCache;
+  const newPixelsFlipped = paintPixels.map(({x,y}) => {
+    const si = ((y%fhf)*fwf+(x%fwf))*4;
+    return {x, y, r:fdf[si], g:fdf[si+1], b:fdf[si+2]};
+  });
+  manualFillRegions.push({ pixelSet: floodSet, pixels: newPixels, pixelsFlipped: newPixelsFlipped, side: 'LEFT' });
+
+  redraw();
+  const skipNote = (doBndSkip && bndPx>0) ? ` skip:${bndPx}px` : '';
+  setStatus(`Filled ${paintPixels.length} px [${mode}${skipNote}]`, 'ok');
+}
+
+// ══════════════════════════════════════
+//  POLYGON TOOLS  — polyline erase & polyfill
+// ══════════════════════════════════════
+function evToCanvas(e){
+  const cr=canvas.getBoundingClientRect();
+  return { x:Math.floor((e.clientX-cr.left)/scale), y:Math.floor((e.clientY-cr.top)/scale) };
+}
+
+// Bresenham line — crisp 1px, zero anti-alias
+function _bresenhamLine(x0,y0,x1,y1,fn){
+  x0=Math.round(x0); y0=Math.round(y0);
+  x1=Math.round(x1); y1=Math.round(y1);
+  const dx=Math.abs(x1-x0), dy=Math.abs(y1-y0);
+  const sx=x0<x1?1:-1, sy=y0<y1?1:-1;
+  let err=dx-dy;
+  while(true){
+    fn(x0,y0);
+    if(x0===x1&&y0===y1) break;
+    const e2=2*err;
+    if(e2>-dy){err-=dy;x0+=sx;}
+    if(e2< dx){err+=dx;y0+=sy;}
+  }
+}
+
+function drawPolyOverlay(){
+  clearOverlay();
+  if(polyPoints.length < 1) return;
+
+  const w=overlayCanvas.width, h=overlayCanvas.height;
+  const imgData = octx.createImageData(w,h);
+  const d = imgData.data;
+
+  function plot(x,y){
+    if(x<0||x>=w||y<0||y>=h) return;
+    const i=(y*w+x)*4;
+    d[i]=255; d[i+1]=0; d[i+2]=0; d[i+3]=255; // solid red
+  }
+
+  const pts = polyMousePt ? [...polyPoints, polyMousePt] : polyPoints;
+  for(let i=0;i<pts.length-1;i++){
+    _bresenhamLine(pts[i].x, pts[i].y, pts[i+1].x, pts[i+1].y, plot);
+  }
+
+  octx.putImageData(imgData,0,0);
+}
+
+// Point-in-polygon (ray casting)
+function pointInPolygon(px, py, pts){
+  let inside = false;
+  for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+    const xi=pts[i].x, yi=pts[i].y, xj=pts[j].x, yj=pts[j].y;
+    if(((yi>py)!==(yj>py)) && (px < (xj-xi)*(py-yi)/(yj-yi)+xi)) inside=!inside;
+  }
+  return inside;
+}
+
+// Get bounding box of polygon
+function polyBounds(pts){
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  for(const p of pts){
+    if(p.x<minX)minX=p.x; if(p.y<minY)minY=p.y;
+    if(p.x>maxX)maxX=p.x; if(p.y>maxY)maxY=p.y;
+  }
+  return {minX,minY,maxX,maxY};
+}
+
+function commitPolyErase(){
+  if(polyPoints.length < 3){ polyPoints=[]; clearOverlay(); return; }
+  const {minX,minY,maxX,maxY} = polyBounds(polyPoints);
+  const w = canvas.width, h = canvas.height;
+  pushUndo();
+
+  const insideSet = new Set();
+  for(let y=Math.max(0,minY);y<=Math.min(h-1,maxY);y++){
+    for(let x=Math.max(0,minX);x<=Math.min(w-1,maxX);x++){
+      if(pointInPolygon(x+0.5,y+0.5,polyPoints)){
+        const key = x+','+y;
+        insideSet.add(key);
+        // Underlying motif pixels bhi erase karo
+        for(const m of motifResults){
+          if(m.pixelSet.has(key)) erasedSet.add(key);
+        }
+      }
+    }
+  }
+
+  // ── Manual fill regions ──
+  // Sirf polygon ke ANDAR wale painted pixels hatao — poora region mat hatao
+  // Pehle wala code poora region hata deta tha agar ek bhi pixel andar tha → GALAT
+  const fullyRemovedManualRegions = []; // isFillTool bfr link check ke liye
+
+  for(let i = manualFillRegions.length - 1; i >= 0; i--){
+    const region = manualFillRegions[i];
+    const newPixels  = region.pixels.filter(p => !insideSet.has(p.x+','+p.y));
+    const newPixSet  = new Set([...region.pixelSet].filter(k => !insideSet.has(k)));
+
+    if(newPixels.length === 0){
+      // Poora region polygon ke andar — fully remove
+      fullyRemovedManualRegions.push(region);
+      manualFillRegions.splice(i, 1);
+    } else if(newPixels.length < region.pixels.length){
+      // Partial overlap — sirf andar wale pixels hataao, region bacha raho
+      region.pixels  = newPixels;
+      region.pixelSet = newPixSet;
+    }
+    // else: koi pixel andar nahi — kuch nahi karo
+  }
+
+  // ── Baked float regions ──
+  bakedFloatRegions = bakedFloatRegions.filter(bfr => {
+    // isFillTool=true: sirf fully removed manualFillRegion se linked ho toh hatao
+    if(bfr.isFillTool){
+      for(const removedRgn of fullyRemovedManualRegions){
+        const [smallSet, bigSet] =
+          bfr.motif.pixelSet.size < removedRgn.pixelSet.size
+            ? [bfr.motif.pixelSet, removedRgn.pixelSet]
+            : [removedRgn.pixelSet, bfr.motif.pixelSet];
+        for(const key of smallSet){
+          if(bigSet.has(key)){
+            for(const k of bfr.pixelSet) erasedSet.add(k);
+            return false;
+          }
+        }
+      }
+    }
+    // isFillTool=false (motif float): polygon ke andar pixels hain?
+    for(const key of bfr.pixelSet){
+      if(insideSet.has(key)){
+        for(const k of bfr.pixelSet) erasedSet.add(k);
+        return false;
+      }
+    }
+    return true;
+  });
+
+  if(processedImage) applyPhase1();
+  polyPoints=[]; polyMousePt=null;
+  clearOverlay(); redraw();
+}
+
+function commitPolyFill(){
+  if(polyPoints.length < 3){ polyPoints=[]; clearOverlay(); return; }
+  // Layer 2: Fill Tool weave
+  const cache = fillToolCache || leftFillCache || rightFillCache;
+  if(!cache){ setStatus('Select a bitmap first', 'err'); polyPoints=[]; clearOverlay(); return; }
+  const {data:fd, w:fw, h:fh} = cache;
+  const {minX,minY,maxX,maxY} = polyBounds(polyPoints);
+  const w = canvas.width, h = canvas.height;
+  const imgData = ctx.getImageData(0,0,w,h);
+  const px = imgData.data;
+  let count = 0;
+  for(let y=Math.max(0,minY);y<=Math.min(h-1,maxY);y++){
+    for(let x=Math.max(0,minX);x<=Math.min(w-1,maxX);x++){
+      if(pointInPolygon(x+0.5,y+0.5,polyPoints)){
+        const si=((y%fh)*fw+(x%fw))*4;
+        const di=(y*w+x)*4;
+        px[di]=fd[si]; px[di+1]=fd[si+1]; px[di+2]=fd[si+2]; px[di+3]=255;
+        manualFillRegions.push({ pixelSet: new Set([`${x},${y}`]), pixels:[{x,y,r:fd[si],g:fd[si+1],b:fd[si+2]}] });
+        count++;
+      }
+    }
+  }
+  ctx.putImageData(imgData,0,0);
+  polyPoints=[]; polyMousePt=null;
+  clearOverlay();
+  setStatus(`Poly-filled ${count} px`, 'ok');
+}
+
+// ── Overlay pointer events ──
+let _overlayDragStart = null;
+let _lassoDrawing = false;  // freehand lasso active
+
+overlayCanvas.addEventListener('mousedown', e=>{
+  if(!originalImage) return;
+  _panLastX = e.clientX; _panLastY = e.clientY;
+  _wasDragging = false;
+
+  if(activeTool==='polyline' && e.button===0){
+    // Freehand lasso — start drawing immediately
+    _lassoDrawing = true;
+    polyPoints = [];
+    polyMousePt = null;
+    const pt = evToCanvas(e);
+    polyPoints.push(pt);
+    e.preventDefault();
+    return;
+  }
+
+  if(activeTool==='erase'||activeTool==='switch'||activeTool==='fill'||activeTool==='pen'){
+    if(e.button===0||e.button===2){
+      _overlayDragStart = {x:e.clientX, y:e.clientY};
+      _penButton = e.button;
+      if(e.button===2) e.preventDefault();
+    }
+  }
+});
+
+overlayCanvas.addEventListener('mousemove', e=>{
+  if(!originalImage) return;
+
+  // Freehand lasso drawing
+  if(activeTool==='polyline' && _lassoDrawing){
+    const pt = evToCanvas(e);
+    const last = polyPoints[polyPoints.length-1];
+    // Add point only if moved at least 1 canvas pixel
+    if(Math.abs(pt.x-last.x)>=1 || Math.abs(pt.y-last.y)>=1){
+      polyPoints.push(pt);
+      drawPolyOverlay();
+    }
+    return;
+  }
+
+  if(_overlayDragStart && (activeTool==='erase'||activeTool==='switch'||activeTool==='fill'||activeTool==='pen')){
+    const dx=Math.abs(e.clientX-_overlayDragStart.x), dy=Math.abs(e.clientY-_overlayDragStart.y);
+    if((dx>5||dy>5)&&!_panDragging){ _panDragging=true; viewport.style.cursor='grabbing'; }
+    if(_panDragging){
+      viewport.scrollLeft-=(e.clientX-_panLastX);
+      viewport.scrollTop -=(e.clientY-_panLastY);
+      _panLastX=e.clientX; _panLastY=e.clientY;
+      e.stopPropagation(); return;
+    }
+  }
+},true);
+
+overlayCanvas.addEventListener('mouseup', e=>{
+  if(!originalImage) return;
+  // Freehand lasso — release = close and commit
+  if(activeTool==='polyline' && _lassoDrawing && e.button===0){
+    _lassoDrawing = false;
+    if(polyPoints.length >= 3) commitPolyErase();
+    else { polyPoints=[]; clearOverlay(); }
+    return;
+  }
+});
+
+overlayCanvas.addEventListener('click', e=>{
+  if(!originalImage) return;
+  if(activeTool==='polyline') return; // handled by mousedown/mouseup
+  if(_panDragging || _wasDragging){
+    _panDragging=false; _wasDragging=false; _overlayDragStart=null;
+    e.stopPropagation(); return;
+  }
+  _overlayDragStart=null;
+  const pt = evToCanvas(e);
+
+  if(activeTool==='switch'){ switchMotifAt(pt.x,pt.y); return; }
+  if(activeTool==='erase'){  eraseMotifAt(pt.x,pt.y,false); return; }
+  if(activeTool==='fill'){   floodFillAt(pt.x,pt.y); return; }
+  if(activeTool==='pen'){    penPaintAt(pt.x,pt.y,_penButton); return; }
+});
+
+overlayCanvas.addEventListener('dblclick', e=>{
+  // freehand lasso has no dblclick — handled by mouseup
+});
+
+overlayCanvas.addEventListener('contextmenu', e=>{
+  if(!originalImage) return;
+  e.preventDefault();
+  if(activeTool==='pen'){
+    const pt=evToCanvas(e); penPaintAt(pt.x,pt.y,2); return;
+  }
+  if(activeTool==='erase'){
+    eraseMotifAt(evToCanvas(e).x, evToCanvas(e).y, true);
+    return;
+  }
+  if(activeTool==='polyline'){
+    // Right-click cancels lasso
+    _lassoDrawing=false; polyPoints=[]; clearOverlay();
+    return;
+  }
+});
+
+window.addEventListener('mouseup', e=>{
+  _overlayDragStart=null;
+  // Safety: if lasso was drawing and mouse released outside canvas
+  if(activeTool==='polyline' && _lassoDrawing){
+    _lassoDrawing=false;
+    if(polyPoints.length>=3) commitPolyErase();
+    else { polyPoints=[]; clearOverlay(); }
+  }
+});
+
+let _spaceToolPrev = null;  // Space press se pehle wala tool
+
+document.addEventListener('keydown', e=>{
+  // Undo / Redo
+  if((e.ctrlKey||e.metaKey) && !e.shiftKey && e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); return; }
+  if((e.ctrlKey||e.metaKey) && (e.key.toLowerCase()==='y' || (e.shiftKey && e.key.toLowerCase()==='z'))){ e.preventDefault(); redo(); return; }
+
+  // Space key
+  if(e.code==='Space' && !e.repeat){
+    if(document.activeElement && (document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA')) return;
+    e.preventDefault();
+
+    // Pen tool + cursor on canvas → eyedropper: pick color under cursor
+    if(activeTool==='pen' && _cursorCanvasX>=0 && _cursorCanvasY>=0 && originalImage){
+      const w=canvas.width;
+      // Read from current displayed canvas (includes pen edits + fills)
+      const px=ctx.getImageData(_cursorCanvasX,_cursorCanvasY,1,1).data;
+      const r=px[0], g=px[1], b=px[2];
+      _penColor = {r,g,b};
+      const hex='#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+      const sw=document.getElementById('penColorSwatch');
+      if(sw) sw.style.background=hex;
+      const pk=document.getElementById('penColorPicker');
+      if(pk) pk.value=hex;
+      return;
+    }
+
+    // Other tools → temporary Move tool
+    if(_spaceToolPrev===null){
+      _spaceToolPrev = activeTool;
+      setTool('move');
+    }
+    return;
+  }
+
+  if(e.key==='Escape'){
+    if(activeTool==='polyline'){ _lassoDrawing=false; polyPoints=[]; clearOverlay(); }
+    else setTool('move');
+    return;
+  }
+  if(e.key==='Enter'){
+    if(activeTool==='polyline'&&polyPoints.length>=3){ _lassoDrawing=false; commitPolyErase(); }
+  }
+});
+
+document.addEventListener('keyup', e=>{
+  if(e.code==='Space' && _spaceToolPrev!==null){
+    const prev = _spaceToolPrev;
+    _spaceToolPrev = null;
+    setTool(prev);
+  }
+});
+
+// ══════════════════════════════════════
+//  MOVE / PAN
+// ══════════════════════════════════════
+let _panDragging=false, _panLastX=0, _panLastY=0;
+let _wasDragging=false;  // mouseup ke baad click tak drag flag preserve karta hai
+
+viewport.addEventListener('mousedown', e=>{
+  const isPan = (e.button===0&&activeTool==='move')||e.button===1;
+  if(!isPan) return;
+  _panDragging=true; _panLastX=e.clientX; _panLastY=e.clientY;
+  viewport.style.cursor='grabbing'; e.preventDefault();
+});
+window.addEventListener('mousemove', e=>{
+  if(!_panDragging) return;
+  viewport.scrollLeft-=(e.clientX-_panLastX);
+  viewport.scrollTop -=(e.clientY-_panLastY);
+  _panLastX=e.clientX; _panLastY=e.clientY;
+});
+window.addEventListener('mouseup', e=>{
+  if(_panDragging){ _wasDragging=true; }
+  _panDragging=false;
+  viewport.style.cursor='grab';
+});
+
+// ══════════════════════════════════════
+//  BUTTON WIRING
+// ══════════════════════════════════════
+document.getElementById('btnMainUpload').onclick = ()=>{
+  document.getElementById('mainUploadInput').click();
+};
+document.getElementById('btnLibUpload').onclick  = openBitmapPicker;
+document.getElementById('btnBmpReload').onclick  = reloadSavedBitmaps;
+document.getElementById('btnExport').onclick     = exportBMP;
+document.getElementById('btnClearFill').onclick  = clearFill;
+document.getElementById('btnReset').onclick      = resetAll;
+document.getElementById('btnUndo').onclick       = undo;
+document.getElementById('btnRedo').onclick       = redo;
+document.getElementById('zoomOut').onclick  = ()=>zoomStep(-1);
+document.getElementById('zoomIn').onclick   = ()=>zoomStep(1);
+document.getElementById('zoom1').onclick    = ()=>{ scale=1; applyScale(); };
+document.getElementById('zoomFit').onclick  = fitCanvas;
+
+// ══════════════════════════════════════
+//  BITMAP LIBRARY  — with persistent file handle storage
+// ══════════════════════════════════════
+let _libDirHandle = null;
+
+async function openBitmapPicker(){
+  if(window.showOpenFilePicker){
+    try{
+      const fileHandles = await window.showOpenFilePicker({
+        multiple: true,
+        startIn : _libDirHandle || 'pictures',
+        types   : [{description:'Images', accept:{'image/*':['.bmp','.png','.jpg','.jpeg','.gif','.webp']}}]
+      });
+      try{ _libDirHandle = await fileHandles[0].getParent(); } catch(_){}
+      // Save handles to IndexedDB for reload on next page open
+      try{ await idbSaveHandles(fileHandles); } catch(_){}
+      document.getElementById('btnBmpReload').classList.add('has-saved');
+      updateBmpStoredInfo(true, fileHandles.length);
+
+      let pending = fileHandles.length;
+      for(const fh of fileHandles){
+        const file = await fh.getFile();
+        const url  = URL.createObjectURL(file);
+        const img  = new Image();
+        img.onload = ()=>{ bitmapLibrary.push({name:file.name,img}); if(--pending===0) refreshDropdowns(); };
+        img.onerror= ()=>{ if(--pending===0) refreshDropdowns(); };
+        img.src = url;
+      }
+      return;
+    } catch(err){
+      if(err.name==='AbortError') return;
+    }
+  }
+  document.getElementById('libUploadInput').click();
+}
+
+document.getElementById('libUploadInput').addEventListener('change', function(e){
+  const files = Array.from(e.target.files);
+  if(!files.length) return;
+  let pending = files.length;
+  files.forEach(file=>{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>{ bitmapLibrary.push({name:file.name,img}); if(--pending===0) refreshDropdowns(); };
+    img.onerror= ()=>{ if(--pending===0) refreshDropdowns(); };
+    img.src = url;
+  });
+  this.value='';
+});
+
+// ── Custom Thumbnail Dropdown State ──
+const _ddState = { left: { value: '', open: false }, fillTool: { value: '', open: false } };
+
+function _drawWeaveThumb(canvas, img){
+  canvas.width = 28; canvas.height = 28;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,28,28);
+  if(!img){ return; }
+  // tile the weave pattern
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  const pw = img.naturalWidth||img.width||8;
+  const ph = img.naturalHeight||img.height||8;
+  const scale = Math.max(1, Math.round(28/Math.max(pw,ph)));
+  const sw = pw*scale, sh = ph*scale;
+  for(let y=0;y<28;y+=sh) for(let x=0;x<28;x+=sw)
+    ctx.drawImage(img, x, y, sw, sh);
+  ctx.restore();
+}
+
+function _buildThumbList(ddId, items, selectedVal, hasNone, onSelect){
+  const list = document.getElementById(ddId+'List');
+  list.innerHTML = '';
+  // None option
+  if(hasNone){
+    const none = document.createElement('div');
+    none.className = 'thumb-dd-item-none' + (selectedVal==='' ? ' selected' : '');
+    none.textContent = 'None';
+    none.onclick = ()=>{ onSelect(''); closeAllThumbDDs(); };
+    list.appendChild(none);
+  }
+  items.forEach((item, i)=>{
+    const row = document.createElement('div');
+    row.className = 'thumb-dd-item' + (selectedVal===String(i) ? ' selected' : '');
+    const cv = document.createElement('canvas');
+    cv.width=28; cv.height=28;
+    _drawWeaveThumb(cv, item.img);
+    const lbl = document.createElement('span');
+    lbl.textContent = item.name.replace(/\.[^.]+$/,'');
+    row.appendChild(cv); row.appendChild(lbl);
+    row.onclick = ()=>{ onSelect(String(i)); closeAllThumbDDs(); };
+    list.appendChild(row);
+  });
+}
+
+function _updateTrigger(ddId, items, val){
+  const thumb = document.getElementById(ddId+'Thumb');
+  const label = document.getElementById(ddId+'Label');
+  if(val==='' || val===null || val===undefined){
+    thumb.width=22; thumb.height=22;
+    const ctx=thumb.getContext('2d'); ctx.clearRect(0,0,22,22);
+    label.textContent = ddId==='leftDD' ? 'None' : '— Select —';
+  } else {
+    const item = bitmapLibrary[+val];
+    if(item){ _drawWeaveThumb(thumb, item.img); label.textContent = item.name.replace(/\.[^.]+$/,''); }
+  }
+}
+
+function toggleThumbDD(which){
+  const ddId = which==='left' ? 'leftDD' : 'fillToolDD';
+  const trigger = document.getElementById(ddId+'Trigger');
+  const list    = document.getElementById(ddId+'List');
+  const isOpen  = list.classList.contains('open');
+
+  closeAllThumbDDs();
+
+  if(!isOpen){
+    // Position list relative to trigger
+    const rect = trigger.getBoundingClientRect();
+    list.style.left  = rect.left + 'px';
+    list.style.top   = (rect.bottom + 2) + 'px';
+    list.style.width = Math.max(rect.width, 160) + 'px';
+    list.classList.add('open');
+    trigger.classList.add('open');
+    _ddState[which].open = true;
+  }
+}
+
+function closeAllThumbDDs(){
+  ['leftDD','fillToolDD'].forEach(id=>{
+    const list = document.getElementById(id+'List');
+    const trig = document.getElementById(id+'Trigger');
+    if(list){ list.classList.remove('open'); }
+    if(trig){ trig.classList.remove('open'); }
+  });
+  _ddState.left.open = false;
+  _ddState.fillTool.open = false;
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.thumb-dd')) closeAllThumbDDs();
+}, true);
+
+function refreshDropdowns(){
+  const prevL  = _ddState.left.value;
+  const prevFT = _ddState.fillTool.value;
+
+  // Motif Weave
+  _buildThumbList('leftDD', bitmapLibrary, prevL, true, (val)=>{
+    _ddState.left.value = val;
+    _updateTrigger('leftDD', bitmapLibrary, val);
+    _syncLeftSelect(val);
+    onLibSelect('left');
+  });
+  _updateTrigger('leftDD', bitmapLibrary, prevL);
+
+  // Fill Tool Weave
+  _buildThumbList('fillToolDD', bitmapLibrary, prevFT, false, (val)=>{
+    _ddState.fillTool.value = val;
+    _updateTrigger('fillToolDD', bitmapLibrary, val);
+    _syncFillToolSelect(val);
+    onFillToolSelect();
+  });
+  _updateTrigger('fillToolDD', bitmapLibrary, prevFT);
+}
+
+// Shim functions — existing onLibSelect/onFillToolSelect read from these
+function _syncLeftSelect(val){ _ddState.left.value = val; }
+function _syncFillToolSelect(val){ _ddState.fillTool.value = val; }
+
+function onLibSelect(side){
+  const val = _ddState.left.value;
+  const idx = val==='' ? -1 : +val;
+
+  if(idx<0){
+    leftImg=null; leftFillCache=null; rightImg=null; rightFillCache=null;
+    clearPrev(leftPrevCtx,leftPrevCv,'leftName','left');
+  } else {
+    leftImg = bitmapLibrary[idx].img;
+    leftFillCache = buildFillCache(leftImg);
+    showPrev(leftImg,leftPrevCtx,leftPrevCv,'leftName',bitmapLibrary[idx].name,'left');
+    rightImg=null;
+    rightFillCache = buildFillCacheFlipped(leftFillCache);
+  }
+  // No "Same as Motif" option — fillTool is always independently selected
+  applyPhase1(); redraw();
+}
+
+// ── Fill Tool Weave selector (Layer 2 — shown on top of Motif Weave) ──
+function onFillToolSelect(){
+  const val = _ddState.fillTool.value;
+  const idx = val==='' ? -1 : +val;
+
+  // Auto-bake: Float Fill checkbox on hai → new weave select karne se PEHLE
+  // current fills freeze karo — taaki purane fills change na ho
+  const floatChk = document.getElementById('chkVertFloat');
+  if(floatChk && floatChk.checked && originalImage && motifResults.length){
+    runProcess();  // current weave se bake → checkbox auto-uncheck hoga
+  }
+
+  if(idx >= 0){
+    fillToolImg          = bitmapLibrary[idx].img;
+    fillToolCache        = buildFillCache(fillToolImg);
+    fillToolCacheFlipped = buildFillCacheFlipped(fillToolCache);
+    _updateFillToolPreview(fillToolImg, false);
+  } else {
+    fillToolImg=null; fillToolCache=null; fillToolCacheFlipped=null;
+    _updateFillToolPreview(null, false);
+  }
+  applyPhase1(); redraw();
+}
+
+function _updateFillToolPreview(img, isSameAsMotif){
+  const pCv   = document.getElementById('fillToolPreview');
+  const nameEl= document.getElementById('fillToolPreviewName');
+  if(!pCv) return;
+  if(!img || isSameAsMotif){
+    pCv.style.display='none';
+    nameEl.style.display='none';
+    return;
+  }
+  const BOX=40;
+  const pCtx=pCv.getContext('2d',{willReadFrequently:true});
+  pCv.width  = Math.max(1, Math.min(img.width*Math.max(1,Math.floor(BOX/Math.max(img.width,img.height))), BOX));
+  pCv.height = Math.max(1, Math.min(img.height*Math.max(1,Math.floor(BOX/Math.max(img.width,img.height))), BOX));
+  pCtx.imageSmoothingEnabled=false;
+  pCtx.clearRect(0,0,pCv.width,pCv.height);
+  pCtx.drawImage(img,0,0,pCv.width,pCv.height);
+  pCv.className='prevCv active-left';
+  pCv.style.display='block';
+  nameEl.style.display='block';
+}
+
+function _updateFillPreview(img, pCtx, pCv, name){
+  // Legacy stub — fill tool now uses its own preview via _updateFillToolPreview
+  if(!pCv) return;
+  if(!img){ pCv.style.display='none'; return; }
+}
+
+function showPrev(img,pCtx,pCv,nameId,name,side){
+  const BOX=44, maxD=Math.max(img.width,img.height,1);
+  const s = maxD<=BOX ? Math.floor(BOX/maxD) : BOX/maxD;
+  pCv.width=Math.max(1,Math.round(img.width*s));
+  pCv.height=Math.max(1,Math.round(img.height*s));
+  pCtx.imageSmoothingEnabled=false;
+  pCtx.clearRect(0,0,pCv.width,pCv.height);
+  pCtx.drawImage(img,0,0,pCv.width,pCv.height);
+  pCv.className='prevCv '+(side==='left'?'active-left':'active-right');
+  pCv.style.display='block';
+  const nameEl=document.getElementById(nameId);
+  const n=name.length>18?name.slice(0,16)+'…':name;
+  nameEl.textContent=n;
+  nameEl.style.display='block';
+}
+function clearPrev(pCtx,pCv,nameId){
+  pCtx.clearRect(0,0,pCv.width,pCv.height);
+  pCv.className='prevCv';
+  pCv.style.display='none';
+  const nameEl=document.getElementById(nameId);
+  nameEl.textContent='';
+  nameEl.style.display='none';
+}
+
+// ══════════════════════════════════════
+//  MAIN IMAGE UPLOAD
+// ══════════════════════════════════════
+document.getElementById('mainUploadInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  this.value='';
+  _lastFileName = file.name.replace(/\.[^.]+$/,'') + '_export.bmp';
+  // Extract folder path where available
+  if(file.webkitRelativePath && file.webkitRelativePath.includes('/')){
+    _lastImageFolder = file.webkitRelativePath.substring(0, file.webkitRelativePath.lastIndexOf('/'));
+  } else if(file.path){
+    _lastImageFolder = file.path.substring(0, Math.max(file.path.lastIndexOf('/'), file.path.lastIndexOf('\\')));
+  } else {
+    _lastImageFolder = '';
+  }
+  _loadImageFile(file);
+});
+
+// ── Drag-and-drop image loading — also captures FileSystemFileHandle when available ──
+const _dropTarget = document.getElementById('rightPanel');
+_dropTarget.addEventListener('dragover', e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; });
+_dropTarget.addEventListener('dragleave', e=>{ /* no visual needed */ });
+_dropTarget.addEventListener('drop', async e=>{
+  e.preventDefault();
+  const item = e.dataTransfer.items && e.dataTransfer.items[0];
+  if(!item) return;
+  // Try to get FileSystemFileHandle (Chrome 86+ supports this for drag-drop)
+  if(item.getAsFileSystemHandle){
+    try{
+      const fh = await item.getAsFileSystemHandle();
+      if(fh && fh.kind === 'file'){
+        _lastImageFileHandle = fh;
+        const file = await fh.getFile();
+        _lastFileName = file.name.replace(/\.[^.]+$/,'') + '_export.bmp';
+        if(file.path){ _lastImageFolder = file.path.substring(0, Math.max(file.path.lastIndexOf('/'), file.path.lastIndexOf('\\'))); }
+        _loadImageFile(file);
+        return;
+      }
+    } catch(_){}
+  }
+  // Fallback: plain File object (no folder capture)
+  const file = item.getAsFile ? item.getAsFile() : (e.dataTransfer.files[0] || null);
+  if(file && file.type.startsWith('image/')){
+    _lastFileName = file.name.replace(/\.[^.]+$/,'') + '_export.bmp';
+    if(file.path){ _lastImageFolder = file.path.substring(0, Math.max(file.path.lastIndexOf('/'), file.path.lastIndexOf('\\'))); }
+    _loadImageFile(file);
+  }
+});
+
+function _loadImageFile(file){
+  setStatus('Loading image…','busy');
+  const img=new Image();
+  img.onload=()=>{
+    canvas.width=img.width; canvas.height=img.height;
+    ctx.drawImage(img,0,0);
+    const rawData=ctx.getImageData(0,0,img.width,img.height);
+    originalImage=buildCleanBW(rawData,img.width,img.height);
+    ctx.putImageData(originalImage,0,0);
+    document.getElementById('emptyHint').style.display='none';
+    setStatus(`${img.width}×${img.height} px — analysing…`,'busy');
+    fitCanvas();
+    showProc('Detecting motifs…');
+    setTimeout(runAnalysis,40);
+  };
+  img.onerror=()=>setStatus('Error loading image','err');
+  img.src=URL.createObjectURL(file);
+}
+
+// ══════════════════════════════════════
+//  ANALYSIS
+// ══════════════════════════════════════
+function runAnalysis(){
+  const w=canvas.width, h=canvas.height;
+  const bin=binarise(originalImage,w,h);
+  const comps=findComponents(bin,w,h);
+  const skelBin=skeletonize(bin.slice(),w,h);
+  motifResults=comps.map(c=>{
+    const border=getBorder(c,w,h,bin);
+    const pts=c.filter(p=>skelBin[p])
+               .map(p=>({x:p%w,y:Math.floor(p/w)}))
+               .sort((a,b)=>a.y-b.y||a.x-b.x);
+    const borderSet=new Set(border.map(p=>p.x+','+p.y));
+    const pixelSet =new Set(c.map(p=>(p%w)+','+(Math.floor(p/w))));
+    const byCol={};
+    for(const p of border){ if(!byCol[p.x]) byCol[p.x]=[]; byCol[p.x].push(p.y); }
+    const vertRuns=[];
+    for(const xStr of Object.keys(byCol)){
+      const x=+xStr, ys=byCol[x].sort((a,b)=>a-b);
+      let i=0;
+      while(i<ys.length){
+        const rp=[{x,y:ys[i]}];
+        while(i+1<ys.length&&ys[i+1]===ys[i]+1){i++;rp.push({x,y:ys[i]});}
+        vertRuns.push({pixels:rp,len:rp.length}); i++;
+      }
+    }
+    const detectedSide=classifyDir(pts);
+    return { side:detectedSide, _origSide:detectedSide,
+             pixels:c.map(p=>({x:p%w,y:Math.floor(p/w)})),
+             border,borderSet,pixelSet,vertRuns };
+  });
+  hideProc();
+  allMotifPixelSet=new Set();
+  motifResults.forEach(m=>m.pixels.forEach(p=>allMotifPixelSet.add(p.x+','+p.y)));
+  setStatus(`${w}×${h} px  |  ${motifResults.length} motif(s) detected`,'ok');
+  syncOverlay();
+  erasedSet.clear();
+  manualFillRegions=[];
+  bakedFloatRegions=[];
+  processedImage=null; motifOnlyImage=null;
+  ctx.putImageData(originalImage,0,0);
+  clearOverlay();
+  const bar=document.getElementById('floatCountBar');
+  if(bar) bar.textContent='';
+  setPhaseStatus('⬤ Processing…');
+  // Auto-apply phase 1 after analysis (no undo push — automatic trigger)
+  setTimeout(()=>{ applyPhase1(); redraw(); setPhaseStatus('⬤ Ready'); }, 0);
+}
+
+function buildCleanBW(rawData,w,h){
+  const src=rawData.data;
+  const out=new Uint8ClampedArray(w*h*4);
+  for(let i=0;i<out.length;i+=4){ out[i]=out[i+1]=out[i+2]=255; out[i+3]=255; }
+  for(let i=0;i<w*h;i++){
+    const lum=(src[i*4]+src[i*4+1]+src[i*4+2])/3;
+    if(lum<180){ out[i*4]=out[i*4+1]=out[i*4+2]=0; out[i*4+3]=255; }
+  }
+  return new ImageData(out,w,h);
+}
+function binarise(imgData,w,h){
+  const d=imgData.data, bin=new Uint8Array(w*h);
+  for(let i=0;i<bin.length;i++) bin[i]=(d[i*4]+d[i*4+1]+d[i*4+2])/3<180?1:0;
+  return bin;
+}
+const wrap=(x,m)=>x<0?m-1:x>=m?0:x;
+function findComponents(bin,w,h){
+  const seen=new Uint8Array(bin.length), comps=[];
+  for(let i=0;i<bin.length;i++){
+    if(!bin[i]||seen[i]) continue;
+    const stack=[i], comp=[];
+    while(stack.length){
+      const p=stack.pop(); if(seen[p]) continue;
+      seen[p]=1; comp.push(p);
+      const x=p%w, y=Math.floor(p/w);
+      for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+        if(!dx&&!dy) continue;
+        const n=wrap(y+dy,h)*w+wrap(x+dx,w);
+        if(bin[n]&&!seen[n]) stack.push(n);
+      }
+    }
+    comps.push(comp);
+  }
+  return comps;
+}
+function getBorder(comp,w,h,bin){
+  const use8=document.getElementById('chkConnected').checked;
+  const edges=[];
+  for(const p of comp){
+    const x=p%w, y=Math.floor(p/w);
+    let isBorder=false;
+    if(use8){
+      outer: for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+        if(!dx&&!dy) continue;
+        if(!bin[wrap(y+dy,h)*w+wrap(x+dx,w)]){ isBorder=true; break outer; }
+      }
+    } else {
+      if(!(bin[wrap(y-1,h)*w+x]&&bin[wrap(y+1,h)*w+x]&&bin[y*w+wrap(x-1,w)]&&bin[y*w+wrap(x+1,w)])) isBorder=true;
+    }
+    if(isBorder) edges.push({x,y});
+  }
+  return edges;
+}
+function getInside(m){ return m.pixels.filter(pt=>!m.borderSet.has(pt.x+','+pt.y)); }
+function skeletonize(img,w,h){
+  const nb=(x,y)=>{ const g=(xx,yy)=>img[wrap(yy,h)*w+wrap(xx,w)];
+    return [g(x,y-1),g(x+1,y-1),g(x+1,y),g(x+1,y+1),g(x,y+1),g(x-1,y+1),g(x-1,y),g(x-1,y-1)]; };
+  let changed;
+  do{ changed=false;
+    [0,1].forEach(s=>{
+      const rem=[];
+      for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+        if(!img[y*w+x]) continue;
+        const n=nb(x,y);
+        const B=n.reduce((a,v)=>a+v,0);
+        const A=n.reduce((a,v,i)=>a+(!v&&n[(i+1)%8]?1:0),0);
+        if(B>=2&&B<=6&&A===1&&
+           (s?(!n[2]||!n[4]||!n[6]):(!n[0]||!n[2]||!n[4]))&&
+           (s?(!n[0]||!n[4]||!n[6]):(!n[2]||!n[4]||!n[6]))) rem.push(y*w+x);
+      }
+      rem.forEach(p=>img[p]=0); if(rem.length) changed=true;
+    });
+  }while(changed);
+  return img;
+}
+function classifyDir(pts){
+  let L=0,R=0;
+  for(let i=1;i<pts.length;i++){
+    const dx=pts[i].x-pts[i-1].x, dy=pts[i].y-pts[i-1].y;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if(dx>0) R+=d; else if(dx<0) L+=d;
+  }
+  return R>L?'RIGHT':'LEFT';
+}
+function reanalyse(){
+  if(!originalImage) return;
+  setPhaseStatus('Re-analysing…'); showProc('Re-detecting motifs…');
+  setTimeout(runAnalysis,40);
+}
+function setPhaseStatus(msg){ const el=document.getElementById('phaseStatus'); if(el) el.textContent=msg; }
+
+// ══════════════════════════════════════
+//  HELPER — manual fills ko current fillToolCache se live recompute karke paint karo
+//  region.pixels = sirf painted/filtered pixels (mode ke hisaab se)
+// ══════════════════════════════════════
+function _paintManualFills(outData, w){
+  if(!manualFillRegions.length) return;
+  // Baked colors use karo — fill time pe store kiye gaye r,g,b values
+  // Isse bitmap change karne pe purane fills affect nahi honge
+  for(const region of manualFillRegions){
+    // Side ke hisaab se normal ya flipped baked pixels use karo
+    const pixels = (region.side === 'RIGHT' && region.pixelsFlipped)
+      ? region.pixelsFlipped
+      : region.pixels;
+    for(const fp of pixels){
+      const di = (fp.y*w+fp.x)*4;
+      outData[di]=fp.r; outData[di+1]=fp.g; outData[di+2]=fp.b; outData[di+3]=255;
+    }
+  }
+}
+
+// ══════════════════════════════════════
+//  PHASE 1 — Fill logic
+//  INNER_BORDER8 mode mein Float Fill bhi merge hota hai directly
+// ══════════════════════════════════════
+function _getPhase1Pixels(m, mode, vLen, floatPixelSet){
+  // floatPixelSet: Set of "x,y" strings from Float Fill (only used in INNER_BORDER8)
+  if(mode==='WHOLE')       return m.pixels;
+  if(mode==='INNER')       return getInside(m);
+  if(mode==='BORDER')      return m.border;
+  const keep=[];
+  for(const run of m.vertRuns) if(run.len>=vLen) for(const p of run.pixels) keep.push(p);
+  if(mode==='BORDER8')     return keep;
+  // INNER_BORDER8: Inside + Vert Border + Float Fill pixels (merged)
+  const base = getInside(m).concat(keep);
+  if(!floatPixelSet || !floatPixelSet.size) return base;
+  // Add float pixels that belong to this motif and aren't already in base
+  const baseKeys = new Set(base.map(p=>p.x+','+p.y));
+  for(const key of floatPixelSet){
+    if(m.pixelSet.has(key) && !baseKeys.has(key)){
+      const [x,y] = key.split(',').map(Number);
+      base.push({x,y});
+    }
+  }
+  return base;
+}
+
+function applyPhase1(){
+  if(!originalImage) return;
+  const mode=document.getElementById('borderMode').value;
+  const w=canvas.width, h=canvas.height;
+  const outData=new Uint8ClampedArray(originalImage.data);
+  const vLen=Math.max(1,parseInt(document.getElementById('vBorderLen').value)||1);
+
+  // INNER_BORDER8 + Float Fill: pre-compute float pixel set using original as base
+  let floatPixelSet = null;
+  if(mode==='INNER_BORDER8' && document.getElementById('chkVertFloat').checked){
+    const minLen=Math.max(1,parseInt(document.getElementById('vertFloatLen').value)||1);
+    floatPixelSet = _computeFloatPixelSet(w, minLen, outData);
+  }
+
+  motifResults.forEach(m=>{
+    const cache=m.side==='LEFT'?leftFillCache:rightFillCache;
+    if(!cache) return;
+    const {data:fd,w:fw,h:fh}=cache;
+    const pixels = _getPhase1Pixels(m, mode, vLen, floatPixelSet);
+    for(const p of pixels){
+      if(erasedSet.has(p.x+','+p.y)) continue;
+      const si=((p.y%fh)*fw+(p.x%fw))*4, di=(p.y*w+p.x)*4;
+      outData[di]=fd[si]; outData[di+1]=fd[si+1]; outData[di+2]=fd[si+2]; outData[di+3]=fd[si+3];
+    }
+  });
+  // Baked Float regions — frozen baked pixel colors use karo (cache se nahi)
+  // Colors bake time pe freeze hote hain — bitmap change karne pe affect nahi hota
+  for(const region of bakedFloatRegions){
+    const pixels = (region.side==='RIGHT' && region.pixelsFlipped)
+      ? region.pixelsFlipped : region.pixels;
+    for(const p of pixels){
+      if(erasedSet.has(p.x+','+p.y)) continue;
+      const di=(p.y*w+p.x)*4;
+      outData[di]=p.r; outData[di+1]=p.g; outData[di+2]=p.b; outData[di+3]=255;
+    }
+  }
+  // motifOnlyImage = motif fills only, NO manual fills
+  motifOnlyImage = new ImageData(new Uint8ClampedArray(outData), w, h);
+  // processedImage = motif fills + manual fills (live recomputed from current fillToolCache)
+  _paintManualFills(outData, w);
+  processedImage=new ImageData(new Uint8ClampedArray(outData),w,h);
+}
+
+// Float Fill ke qualified pixels ka flat Set banao — "x,y" keys
+function _computeFloatPixelSet(w, minLen, srcData){
+  const result = new Set();
+  motifResults.forEach(m=>{
+    const byCol={};
+    for(const p of m.pixels){
+      if(erasedSet.has(p.x+','+p.y)) continue;
+      const di=(p.y*w+p.x)*4;
+      const lum=(srcData[di]+srcData[di+1]+srcData[di+2])/3;
+      if(lum>=180) continue;
+      if(!byCol[p.x]) byCol[p.x]=[];
+      byCol[p.x].push(p.y);
+    }
+    for(const xStr of Object.keys(byCol)){
+      const x=+xStr, ys=byCol[x].sort((a,b)=>a-b);
+      let i=0;
+      while(i<ys.length){
+        const runYs=[ys[i]];
+        while(i+1<ys.length&&ys[i+1]===ys[i]+1){i++;runYs.push(ys[i]);} i++;
+        if(runYs.length>=minLen){
+          const topIsEdge=!m.pixelSet.has(x+','+(runYs[0]-1));
+          const botIsEdge=!m.pixelSet.has(x+','+(runYs[runYs.length-1]+1));
+          const start=topIsEdge?2:0, end=botIsEdge?runYs.length-2:runYs.length;
+          for(let j=start;j<end;j++) result.add(x+','+runYs[j]);
+        }
+      }
+    }
+  });
+  return result;
+}
+
+// ══════════════════════════════════════
+//  FLOAT FILL — Phase 2/3
+//  INNER_BORDER8 mode mein yeh alag se nahi chalta — applyPhase1 mein merge hota hai
+// ══════════════════════════════════════
+function computeFloatData(w,minLen,srcData){
+  const floatData=[];
+  motifResults.forEach(m=>{
+    const byCol={};
+    for(const p of m.pixels){
+      if(erasedSet.has(p.x+','+p.y)) continue;
+      const di=(p.y*w+p.x)*4;
+      const lum=(srcData[di]+srcData[di+1]+srcData[di+2])/3;
+      if(lum>=180) continue;
+      if(!byCol[p.x]) byCol[p.x]=[];
+      byCol[p.x].push(p.y);
+    }
+    const qualified=[];
+    for(const xStr of Object.keys(byCol)){
+      const x=+xStr, ys=byCol[x].sort((a,b)=>a-b);
+      let i=0;
+      while(i<ys.length){
+        const runYs=[ys[i]];
+        while(i+1<ys.length&&ys[i+1]===ys[i]+1){i++;runYs.push(ys[i]);} i++;
+        if(runYs.length>=minLen){
+          const topIsEdge=!m.pixelSet.has(x+','+(runYs[0]-1));
+          const botIsEdge=!m.pixelSet.has(x+','+(runYs[runYs.length-1]+1));
+          const start=topIsEdge?2:0, end=botIsEdge?runYs.length-2:runYs.length;
+          for(let j=start;j<end;j++) qualified.push({x,y:runYs[j]});
+        }
+      }
+    }
+    if(qualified.length) floatData.push({m,pixels:qualified});
+  });
+  return floatData;
+}
+
+function runProcess(skipUndo=false){
+  if(!originalImage){ setPhaseStatus('No image loaded'); return; }
+  if(!skipUndo) pushUndo();
+  applyPhase1();
+  const floatChk=document.getElementById('chkVertFloat');
+  const bar=document.getElementById('floatCountBar');
+  const mode=document.getElementById('borderMode').value;
+
+  if(floatChk.checked&&motifResults.length){
+    const w=canvas.width;
+    const minLen=Math.max(1,parseInt(document.getElementById('vertFloatLen').value)||1);
+
+    if(mode==='INNER_BORDER8'){
+      // Float Fill already merged into applyPhase1 for INNER_BORDER8
+      // Count float pixels for status
+      const floatSet=_computeFloatPixelSet(w,minLen,originalImage.data);
+      floatChk.checked=false;
+      if(bar) bar.textContent='';
+      ctx.putImageData(processedImage,0,0); clearOverlay();
+      setPhaseStatus(`Phase 1 ✔ → Float merged in Inside+Vert  •  ${floatSet.size} float px`);
+    } else {
+      // Separate float pass for other modes
+      const floatData=computeFloatData(w,minLen,motifOnlyImage.data);
+      let totalFloatPx=0;
+      const outData=new Uint8ClampedArray(motifOnlyImage.data);
+      // manualFillRegion.side map — float pixel ke adjacent neighbour ka side jaanna ke liye
+      const manualPxSideMap = new Map();
+      for(const region of manualFillRegions){
+        const s = region.side || 'LEFT';
+        for(const fp of region.pixels) manualPxSideMap.set(fp.x+','+fp.y, s);
+      }
+      // Reset baked float regions — fresh bake
+      bakedFloatRegions = [];
+
+      for(const {m,pixels} of floatData){
+        const motifCache=m.side==='LEFT'?leftFillCache:rightFillCache;
+        // Adjacent (fillTool) pixels aur non-adjacent (motif) pixels ko alag track karo
+        // kyunki unke switch caches alag hote hain
+        const normPixelSet = new Set(), normPixels = [];   // motif weave float pixels
+        const ftPixelSet   = new Set(), ftPixels   = [];   // fillTool weave float pixels
+
+        for(const p of pixels){
+          if(erasedSet.has(p.x+','+p.y)) continue;
+          const neighbors=[
+            p.x+','+(p.y-1), p.x+','+(p.y+1),
+            (p.x-1)+','+p.y, (p.x+1)+','+p.y,
+          ];
+          // Neighbour ki side dekho — default LEFT (motif)
+          let adjSide = null;
+          for(const nk of neighbors){
+            if(manualPxSideMap.has(nk)){ adjSide = manualPxSideMap.get(nk); break; }
+          }
+          const adjacentToManual = adjSide !== null;
+          const activeFillCache  = fillToolCache || motifCache;
+          const cache = adjacentToManual ? activeFillCache : motifCache;
+          if(!cache) continue;
+          const {data:fd,w:fw,h:fh}=cache;
+          const si=((p.y%fh)*fw+(p.x%fw))*4, di=(p.y*w+p.x)*4;
+          outData[di]=fd[si]; outData[di+1]=fd[si+1]; outData[di+2]=fd[si+2]; outData[di+3]=fd[si+3];
+          totalFloatPx++;
+          if(adjacentToManual){
+            ftPixelSet.add(p.x+','+p.y);
+            ftPixels.push({x:p.x, y:p.y});
+          } else {
+            normPixelSet.add(p.x+','+p.y);
+            normPixels.push({x:p.x, y:p.y});
+          }
+        }
+        // Non-adjacent float pixels: motif weave — r,g,b bake time pe freeze karo
+        if(normPixelSet.size > 0){
+          const normCacheFlip = buildFillCacheFlipped(motifCache);
+          const {data:fn,w:fwn,h:fhn}=motifCache;
+          const {data:fnf,w:fwnf,h:fhnf}=normCacheFlip;
+          const normBaked = normPixels.map(p=>{
+            const si=((p.y%fhn)*fwn+(p.x%fwn))*4;
+            return {x:p.x,y:p.y,r:fn[si],g:fn[si+1],b:fn[si+2]};
+          });
+          const normBakedFlip = normPixels.map(p=>{
+            const si=((p.y%fhnf)*fwnf+(p.x%fwnf))*4;
+            return {x:p.x,y:p.y,r:fnf[si],g:fnf[si+1],b:fnf[si+2]};
+          });
+          bakedFloatRegions.push({ motif:m, pixelSet:normPixelSet,
+            pixels:normBaked, pixelsFlipped:normBakedFlip,
+            isFillTool:false, side:'LEFT' });
+        }
+        // Adjacent float pixels: fillTool weave — r,g,b bake time pe freeze karo
+        if(ftPixelSet.size > 0){
+          const ftCacheN = fillToolCache || motifCache;
+          const ftCacheF = fillToolCacheFlipped || buildFillCacheFlipped(ftCacheN);
+          const {data:fft,w:fwft,h:fhft}=ftCacheN;
+          const {data:fftf,w:fwftf,h:fhftf}=ftCacheF;
+          const ftBaked = ftPixels.map(p=>{
+            const si=((p.y%fhft)*fwft+(p.x%fwft))*4;
+            return {x:p.x,y:p.y,r:fft[si],g:fft[si+1],b:fft[si+2]};
+          });
+          const ftBakedFlip = ftPixels.map(p=>{
+            const si=((p.y%fhftf)*fwftf+(p.x%fwftf))*4;
+            return {x:p.x,y:p.y,r:fftf[si],g:fftf[si+1],b:fftf[si+2]};
+          });
+          bakedFloatRegions.push({ motif:m, pixelSet:ftPixelSet,
+            pixels:ftBaked, pixelsFlipped:ftBakedFlip,
+            isFillTool:true, side:'LEFT' });
+        }
+      }
+      // Store baked result as new motifOnlyImage so future flood detection is still clean
+      motifOnlyImage=new ImageData(new Uint8ClampedArray(outData),w,canvas.height);
+      // Manual fills LAST — live recomputed from current fillToolCache (hamesha upar)
+      _paintManualFills(outData, w);
+      processedImage=new ImageData(new Uint8ClampedArray(outData),w,canvas.height);
+      floatChk.checked=false;
+      if(bar) bar.textContent='';
+      ctx.putImageData(processedImage,0,0); clearOverlay();
+      setPhaseStatus(`Phase 1 ✔ → Phase 2→3 ✔ baked  •  ${totalFloatPx} float px filled`);
+    }
+  } else {
+    ctx.putImageData(processedImage,0,0); clearOverlay();
+    if(bar) bar.textContent='';
+    setPhaseStatus('');
+  }
+}
+
+function redraw(){
+  if(!originalImage) return;
+  const w=canvas.width, h=canvas.height;
+  const floatOn=document.getElementById('chkVertFloat').checked;
+  const minLen=Math.max(1,parseInt(document.getElementById('vertFloatLen').value)||1);
+  const mode=document.getElementById('borderMode').value;
+  const vLen=Math.max(1,parseInt(document.getElementById('vBorderLen').value)||1);
+
+  // Base: use processedImage if available, else compute live motif fills on top of original
+  let outData;
+  if(processedImage){
+    outData = new Uint8ClampedArray(processedImage.data);
+  } else {
+    // Live-compute motif fills so Switch/Erase are visible before Process is clicked
+    outData = new Uint8ClampedArray(originalImage.data);
+    // For INNER_BORDER8 + Float: pre-compute float set using originalImage (manual fills ke bina)
+    let floatPixelSet = null;
+    if(mode==='INNER_BORDER8' && floatOn){
+      floatPixelSet = _computeFloatPixelSet(w, minLen, originalImage.data);
+    }
+    motifResults.forEach(m=>{
+      const cache = m.side==='LEFT' ? leftFillCache : rightFillCache;
+      if(!cache) return;
+      const {data:fd,w:fw,h:fh} = cache;
+      const pixels = _getPhase1Pixels(m, mode, vLen, floatPixelSet);
+      for(const p of pixels){
+        if(erasedSet.has(p.x+','+p.y)) continue;
+        const si=((p.y%fh)*fw+(p.x%fw))*4, di=(p.y*w+p.x)*4;
+        outData[di]=fd[si]; outData[di+1]=fd[si+1]; outData[di+2]=fd[si+2]; outData[di+3]=fd[si+3];
+      }
+    });
+  }
+
+  let floatData=[];
+  let totalFloatPx=0;
+
+  // ── Float Fill — INNER_BORDER8 mein already merged, baaki modes mein alag pass ──
+  // srcData = motifOnlyImage (manual fills ke bina) — warna Fill Tool ke painted pixels
+  //           Float Fill ko light pixels lagte hain aur woh skip ho jaata hai
+  if(floatOn && motifResults.length && mode!=='INNER_BORDER8'){
+    const srcData = motifOnlyImage ? motifOnlyImage.data : originalImage.data;
+    // manualFill painted pixels → side map ("x,y" → 'LEFT'/'RIGHT')
+    const manualPxSideMap = new Map();
+    for(const region of manualFillRegions){
+      const s = region.side || 'LEFT';
+      for(const fp of region.pixels) manualPxSideMap.set(fp.x+','+fp.y, s);
+    }
+    // Normal fillToolCache and its flip
+    const ftCacheN = fillToolCache || leftFillCache || rightFillCache;
+    const ftCacheF = ftCacheN ? (fillToolCacheFlipped || buildFillCacheFlipped(ftCacheN)) : null;
+
+    floatData=computeFloatData(w,minLen,srcData);
+    for(const {m,pixels} of floatData){
+      const motifCache = m.side==='LEFT' ? leftFillCache : rightFillCache;
+      for(const p of pixels){
+        if(erasedSet.has(p.x+','+p.y)) continue;
+        if(manualPxSideMap.has(p.x+','+p.y)) continue; // manual fill ke upar Float nahi
+
+        const neighbors = [
+          (p.x)+','+(p.y-1), (p.x)+','+(p.y+1),
+          (p.x-1)+','+p.y,   (p.x+1)+','+p.y,
+        ];
+        // Neighbour ka side dekho — agar adjacent to manual fill hai
+        let adjSide = null;
+        for(const nk of neighbors){
+          if(manualPxSideMap.has(nk)){ adjSide = manualPxSideMap.get(nk); break; }
+        }
+
+        let cache;
+        if(adjSide !== null){
+          // Adjacent to manual fill — fillTool weave use karo, side ke hisaab se
+          cache = (adjSide==='RIGHT' && ftCacheF) ? ftCacheF : ftCacheN;
+        } else {
+          cache = motifCache;
+        }
+        if(!cache) continue;
+        const {data:fd,w:fw,h:fh}=cache;
+        const si=((p.y%fh)*fw+(p.x%fw))*4, di=(p.y*w+p.x)*4;
+        outData[di]=fd[si]; outData[di+1]=fd[si+1]; outData[di+2]=fd[si+2]; outData[di+3]=fd[si+3];
+        totalFloatPx++;
+      }
+    }
+  } else if(floatOn && motifResults.length && mode==='INNER_BORDER8' && !processedImage){
+    // Already merged above in live preview; count for display
+    const floatSet=_computeFloatPixelSet(w,minLen,originalImage.data);
+    totalFloatPx=floatSet.size;
+    floatData=[{stub:true}]; // non-empty so status bar shows
+  }
+
+  // ── Manual fills HAMESHA LAST — current fillToolCache se live recompute ──
+  _paintManualFills(outData, w);
+
+  // ── Pen edits — non-destructive layer, always on top ──
+  if(penEdits.size){
+    for(const [key, col] of penEdits){
+      const [x,y] = key.split(',').map(Number);
+      if(x<0||x>=w||y<0||y>=h) continue;
+      const di=(y*w+x)*4;
+      outData[di]=col.r; outData[di+1]=col.g; outData[di+2]=col.b; outData[di+3]=255;
+    }
+  }
+
+  ctx.putImageData(new ImageData(outData,w,h),0,0);
+
+  // ── Highlight float — scan current canvas data and draw red overlay ──
+  if(highlightFloatActive){
+    const hlLen = Math.max(1, parseInt(document.getElementById('highlightLen').value)||1);
+    highlightPixelSet = _computeHighlightPixels(outData, w, h, hlLen);
+  }
+  clearOverlay(); // redraws highlight on overlay + clears poly (poly redraws itself)
+
+  const bar=document.getElementById('floatCountBar');
+  if(floatOn&&floatData.length){
+    if(bar) bar.textContent=`${mode==='INNER_BORDER8'?'merged':'float'}  •  ${totalFloatPx} px  — click ↓ Bake Float to apply`;
+    setPhaseStatus(`Float preview: ${totalFloatPx} px — click ↓ Bake Float to apply`);
+  } else {
+    if(bar) bar.textContent='';
+    if(processedImage) setPhaseStatus('');
+  }
+}
+
+// ══════════════════════════════════════
+//  ZOOM
+// ══════════════════════════════════════
+function applyScale(){
+  canvas.style.width=(canvas.width*scale)+'px'; canvas.style.height=(canvas.height*scale)+'px';
+  overlayCanvas.style.width=canvas.style.width; overlayCanvas.style.height=canvas.style.height;
+  document.getElementById('zoomBadge').textContent=scale+'x';
+}
+function zoomStep(dir){
+  if(!originalImage) return;
+  const oldScale=scale;
+  if(dir>0){if(scale>=MAX_SCALE)return;scale++;}else{if(scale<=1)return;scale--;}
+  const cx=viewport.scrollLeft+viewport.clientWidth/2, cy=viewport.scrollTop+viewport.clientHeight/2;
+  applyScale();
+  const ratio=scale/oldScale;
+  viewport.scrollLeft=cx*ratio-viewport.clientWidth/2;
+  viewport.scrollTop=cy*ratio-viewport.clientHeight/2;
+}
+function fitCanvas(){
+  if(!canvas.width||!canvas.height) return;
+  const vp=viewport;
+  const sx=Math.floor((vp.clientWidth-32)/canvas.width), sy=Math.floor((vp.clientHeight-32)/canvas.height);
+  scale=Math.max(1,Math.min(sx,sy,MAX_SCALE)); applyScale();
+  requestAnimationFrame(()=>{
+    vp.scrollLeft=Math.max(0,(vp.scrollWidth-vp.clientWidth)/2);
+    vp.scrollTop=Math.max(0,(vp.scrollHeight-vp.clientHeight)/2);
+  });
+}
+viewport.addEventListener('wheel',e=>{
+  if(!originalImage) return; e.preventDefault();
+  const vr=viewport.getBoundingClientRect(), cr=canvas.getBoundingClientRect();
+  const imgX=(e.clientX-cr.left)/scale, imgY=(e.clientY-cr.top)/scale;
+  const cvScrollX=cr.left-vr.left+viewport.scrollLeft, cvScrollY=cr.top-vr.top+viewport.scrollTop;
+  const mouseVpX=e.clientX-vr.left, mouseVpY=e.clientY-vr.top;
+  const oldScale=scale;
+  if(e.deltaY<0){if(scale<MAX_SCALE)scale++;}else{if(scale>1)scale--;}
+  if(scale===oldScale) return;
+  applyScale();
+  const ratio=scale/oldScale;
+  viewport.scrollLeft=cvScrollX*ratio+imgX*scale-mouseVpX;
+  viewport.scrollTop=cvScrollY*ratio+imgY*scale-mouseVpY;
+},{passive:false});
+
+let _cursorCanvasX = -1, _cursorCanvasY = -1;  // current canvas pixel under cursor
+
+viewport.addEventListener('mousemove',e=>{
+  if(!originalImage) return;
+  const cr=canvas.getBoundingClientRect();
+  const x=Math.floor((e.clientX-cr.left)/scale), y=Math.floor((e.clientY-cr.top)/scale);
+  if(x>=0&&x<canvas.width&&y>=0&&y<canvas.height){
+    _cursorCanvasX=x; _cursorCanvasY=y;
+    document.getElementById('coordBar').textContent=`x:${x}  y:${y}  scale:${scale}x`;
+  } else {
+    _cursorCanvasX=-1; _cursorCanvasY=-1;
+  }
+});
+
+// ══════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════
+function clearFill(){
+  if(!originalImage) return;
+  pushUndo();
+  erasedSet.clear(); manualFillRegions=[]; bakedFloatRegions=[]; penEdits.clear();
+  motifResults.forEach(m=>{ if(m._origSide) m.side=m._origSide; });
+  processedImage=null; motifOnlyImage=null;
+  ctx.putImageData(originalImage,0,0); clearOverlay();
+  const bar=document.getElementById('floatCountBar'); if(bar) bar.textContent='';
+  setPhaseStatus('⬤ Ready — click ▶ Process to apply fill');
+}
+function resetAll(){
+  _undoStack=[]; _redoStack=[]; _updateUndoButtons();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  canvas.width=canvas.height=0; canvas.style.width=canvas.style.height='';
+  originalImage=null; processedImage=null; motifOnlyImage=null; motifResults=[];
+  erasedSet.clear(); allMotifPixelSet.clear(); manualFillRegions=[]; bakedFloatRegions=[];
+  polyPoints=[]; polyMousePt=null; clearOverlay();
+  penEdits.clear(); highlightPixelSet.clear(); highlightFloatActive=false;
+  const chkH=document.getElementById('chkHighlight'); if(chkH) chkH.checked=false;
+  setTool('move');
+  document.getElementById('emptyHint').style.display='flex';
+  setPhaseStatus('Upload image to begin');
+  const bar=document.getElementById('floatCountBar'); if(bar) bar.textContent='';
+  setStatus('No image loaded','');
+}
+
+// ══════════════════════════════════════
+//  BMP EXPORT  — 8-bit indexed, fully standard, opens in all software
+// ══════════════════════════════════════
+
+// ── Nearest palette entry (Euclidean RGB) ──
+function nearestPalIdx(r,g,b,pal){
+  let best=0, bestD=Infinity;
+  for(let i=0;i<pal.length;i++){
+    const dr=r-pal[i].r, dg=g-pal[i].g, db=b-pal[i].b;
+    const d=dr*dr+dg*dg+db*db;
+    if(d<bestD){bestD=d;best=i;if(d===0)break;}
+  }
+  return best;
+}
+
+// ── Median-cut quantization on unique colors (fast even for large images) ──
+function medianCutPalette(uniq, maxColors){
+  // uniq = [{r,g,b,count}, ...]
+  if(uniq.length <= maxColors){
+    const pal = uniq.map(c=>({r:c.r,g:c.g,b:c.b}));
+    while(pal.length < maxColors) pal.push({r:0,g:0,b:0});
+    return pal;
+  }
+  let buckets = [uniq.slice()];
+  while(buckets.length < maxColors){
+    // Find bucket with largest colour range (weighted by count doesn't matter for range)
+    let bi=0, bestR=0;
+    for(let i=0;i<buckets.length;i++){
+      const bk=buckets[i];
+      let mn=[255,255,255],mx=[0,0,0];
+      for(const {r,g,b} of bk){
+        if(r<mn[0])mn[0]=r;if(r>mx[0])mx[0]=r;
+        if(g<mn[1])mn[1]=g;if(g>mx[1])mx[1]=g;
+        if(b<mn[2])mn[2]=b;if(b>mx[2])mx[2]=b;
+      }
+      const rng=Math.max(mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2]);
+      if(rng>bestR){bestR=rng;bi=i;}
+    }
+    if(bestR===0) break;
+    const bk=buckets.splice(bi,1)[0];
+    // Find widest channel
+    let mn=[255,255,255],mx=[0,0,0];
+    for(const {r,g,b} of bk){
+      if(r<mn[0])mn[0]=r;if(r>mx[0])mx[0]=r;
+      if(g<mn[1])mn[1]=g;if(g>mx[1])mx[1]=g;
+      if(b<mn[2])mn[2]=b;if(b>mx[2])mx[2]=b;
+    }
+    const ranges=[mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2]];
+    const ch=['r','g','b'][ranges.indexOf(Math.max(...ranges))];
+    bk.sort((a,b2)=>a[ch]-b2[ch]);
+    // Split at median weighted by count
+    let total=bk.reduce((s,c)=>s+c.count,0), half=0, mid=0;
+    for(let i=0;i<bk.length;i++){
+      half+=bk[i].count;
+      if(half*2>=total){mid=i+1;break;}
+    }
+    if(mid===0||mid===bk.length) mid=Math.floor(bk.length/2);
+    buckets.push(bk.slice(0,mid), bk.slice(mid));
+  }
+  // Average each bucket (weighted by pixel count)
+  return buckets.filter(b=>b.length>0).map(bk=>{
+    let sr=0,sg=0,sb=0,sc=0;
+    for(const {r,g,b,count} of bk){sr+=r*count;sg+=g*count;sb+=b*count;sc+=count;}
+    return {r:Math.round(sr/sc),g:Math.round(sg/sc),b:Math.round(sb/sc)};
+  });
+}
+
+function canvasToBMP(){
+  const w=canvas.width, h=canvas.height;
+  const px=ctx.getImageData(0,0,w,h).data;
+  const nPx=w*h;
+
+  // ── 1. Collect unique colours with pixel counts ──
+  const cntMap=new Map(); // packed 24-bit RGB → count
+  for(let i=0;i<nPx*4;i+=4){
+    const key=(px[i]<<16)|(px[i+1]<<8)|px[i+2];
+    cntMap.set(key,(cntMap.get(key)||0)+1);
+  }
+  const uniq=Array.from(cntMap.entries()).map(([k,count])=>({
+    r:(k>>16)&0xff, g:(k>>8)&0xff, b:k&0xff, count
+  }));
+
+  // ── 2. Build 256-entry palette ──
+  const palette = medianCutPalette(uniq, 256); // exactly 256 entries
+
+  // ── 3. Build fast lookup: packed RGB → palette index ──
+  //    For exact matches use a Map; misses fall back to nearest search
+  const exactMap=new Map();
+  palette.forEach((c,i)=>exactMap.set((c.r<<16)|(c.g<<8)|c.b, i));
+  // Cache for near-match lookups so we don't re-search the same colour repeatedly
+  const nearCache=new Map();
+  function getIdx(r,g,b){
+    const key=(r<<16)|(g<<8)|b;
+    let idx=exactMap.get(key);
+    if(idx!==undefined) return idx;
+    idx=nearCache.get(key);
+    if(idx!==undefined) return idx;
+    idx=nearestPalIdx(r,g,b,palette);
+    nearCache.set(key,idx);
+    return idx;
+  }
+
+  // ── 4. Write standard 8-bit BMP ──
+  // File layout: BITMAPFILEHEADER(14) + BITMAPINFOHEADER(40) + ColorTable(1024) + PixelData
+  const rowStride = Math.ceil(w/4)*4;       // rows padded to 4-byte boundary
+  const pixelBytes = rowStride * h;
+  const dataOffset = 14+40+256*4;           // = 1078  (0x436)
+  const fileSize   = dataOffset + pixelBytes;
+
+  const buf=new ArrayBuffer(fileSize);
+  const dv=new DataView(buf);
+  const u8=new Uint8Array(buf);
+
+  // BITMAPFILEHEADER
+  u8[0]=0x42; u8[1]=0x4D;               // Signature 'BM'
+  dv.setUint32(2, fileSize,   true);     // bfSize
+  dv.setUint32(6, 0,          true);     // bfReserved1+2
+  dv.setUint32(10, dataOffset,true);     // bfOffBits
+
+  // BITMAPINFOHEADER
+  dv.setUint32(14, 40,         true);    // biSize
+  dv.setInt32 (18, w,          true);    // biWidth
+  dv.setInt32 (22, h,          true);    // biHeight — positive = bottom-to-top (standard)
+  dv.setUint16(26, 1,          true);    // biPlanes
+  dv.setUint16(28, 8,          true);    // biBitCount = 8
+  dv.setUint32(30, 0,          true);    // biCompression = BI_RGB (no compression)
+  dv.setUint32(34, pixelBytes, true);    // biSizeImage
+  dv.setInt32 (38, 3780,       true);    // biXPelsPerMeter = 96 DPI
+  dv.setInt32 (42, 3780,       true);    // biYPelsPerMeter = 96 DPI
+  dv.setUint32(46, 256,        true);    // biClrUsed
+  dv.setUint32(50, 0,          true);    // biClrImportant (0 = all important)
+
+  // Color table — 256 × 4 bytes (Blue, Green, Red, Reserved=0)
+  let off=54;
+  for(const {r,g,b} of palette){
+    u8[off++]=b; u8[off++]=g; u8[off++]=r; u8[off++]=0;
+  }
+
+  // Pixel data — rows stored bottom-to-top (positive biHeight standard)
+  off = dataOffset;
+  for(let y=h-1; y>=0; y--){
+    for(let x=0; x<w; x++){
+      const si=(y*w+x)*4;
+      u8[off++]=getIdx(px[si],px[si+1],px[si+2]);
+    }
+    for(let p=w; p<rowStride; p++) u8[off++]=0; // row padding
+  }
+
+  return u8;
+}
+
+let _lastFolderPath = '';
+let _savedDirHandle = null;  // persists folder handle across exports within session
+try{ _lastFolderPath = localStorage.getItem('motifExportFolder') || ''; } catch(_){}
+
+function exportBMP(){
+  if(!originalImage){ alert('No image to export.'); return; }
+  document.getElementById('emFileName').value = _lastFileName || 'motif_export.bmp';
+  // Load saved folder path from localStorage
+  const savedFolder = _lastFolderPath || '';
+  document.getElementById('emFolderPath').value = savedFolder;
+  if(savedFolder) document.getElementById('emFolderHint').textContent = 'Saved path loaded. Click Browse to change.';
+  else document.getElementById('emFolderHint').textContent = 'Click Browse to select a folder. Path is saved for next time.';
+  document.getElementById('exportModal').classList.add('show');
+  setTimeout(()=>document.getElementById('emFileName').select(), 50);
+}
+
+function _doExport(){
+  const rawName = document.getElementById('emFileName').value.trim();
+  const folder  = document.getElementById('emFolderPath').value.trim();
+  const fileName = (rawName ? rawName.replace(/\.bmp$/i,'') : 'motif_export') + '.bmp';
+  // Save folder permanently in localStorage
+  if(folder){ _lastFolderPath = folder; try{ localStorage.setItem('motifExportFolder', folder); } catch(_){} }
+  document.getElementById('exportModal').classList.remove('show');
+  setStatus('Building 8-bit BMP...','busy');
+  setTimeout(async ()=>{
+    const bmpBytes = canvasToBMP();
+    const blob = new Blob([bmpBytes],{type:'image/bmp'});
+    // If we have a dir handle, write directly into that folder
+    if(_savedDirHandle){
+      try{
+        const fileHandle = await _savedDirHandle.getFileHandle(fileName, { create: true });
+        const ws = await fileHandle.createWritable();
+        await ws.write(blob);
+        await ws.close();
+        setStatus('Saved: '+fileName+'  →  '+(_lastFolderPath||_savedDirHandle.name),'ok');
+        return;
+      } catch(err){ console.warn('Direct folder write failed, falling back to download:', err); }
+    }
+    // Fallback: browser download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+    const note = folder ? '  —  '+folder : '';
+    setStatus('Downloaded: '+fileName+note,'ok');
+  }, 0);
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('emBtnSave').onclick = _doExport;
+  document.getElementById('emBtnCancel').onclick = ()=>{
+    document.getElementById('exportModal').classList.remove('show');
+    setStatus('Export cancelled','');
+  };
+  // Browse Folder button — works in all browsers
+  document.getElementById('emBtnBrowseFolder').onclick = async ()=>{
+    if(window.showDirectoryPicker){
+      // Chrome / Edge: native folder picker with full write access
+      try{
+        const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+        _savedDirHandle = dirHandle;
+        const path = dirHandle.name;
+        document.getElementById('emFolderPath').value = path;
+        _lastFolderPath = path;
+        try{ localStorage.setItem('motifExportFolder', path); } catch(_){}
+        document.getElementById('emFolderHint').textContent = 'Folder "' + path + '" selected and saved!';
+      } catch(err){
+        if(err.name !== 'AbortError') console.error(err);
+      }
+    } else {
+      // Firefox / Safari: use webkitdirectory input to read the folder path
+      document.getElementById('emFolderInput').click();
+    }
+  };
+
+  // webkitdirectory fallback — fires when user picks a folder in Firefox/Safari
+  document.getElementById('emFolderInput').addEventListener('change', function(){
+    const file = this.files[0];
+    if(!file) return;
+    // webkitRelativePath = "FolderName/..." — extract just the folder name
+    let path = '';
+    if(file.webkitRelativePath){
+      path = file.webkitRelativePath.split('/')[0];
+    } else {
+      path = file.name;
+    }
+    document.getElementById('emFolderPath').value = path;
+    _lastFolderPath = path;
+    try{ localStorage.setItem('motifExportFolder', path); } catch(_){}
+    document.getElementById('emFolderHint').textContent = 'Folder "' + path + '" selected and saved!';
+    this.value = ''; // reset so same folder can be picked again
+  });
+  document.getElementById('exportModal').addEventListener('click', e=>{
+    if(e.target === document.getElementById('exportModal')){
+      document.getElementById('exportModal').classList.remove('show');
+      setStatus('Export cancelled','');
+    }
+  });
+  document.getElementById('emFileName').addEventListener('keydown', e=>{
+    if(e.key==='Enter') document.getElementById('emFolderPath').focus();
+  });
+  document.getElementById('emFolderPath').addEventListener('keydown', e=>{
+    if(e.key==='Enter') _doExport();
+    if(e.key==='Escape'){
+      document.getElementById('exportModal').classList.remove('show');
+      setStatus('Export cancelled','');
+    }
+  });
+});
+</script>
+</body>
+</html>
