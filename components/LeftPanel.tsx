@@ -39,54 +39,58 @@ function ThumbSelect({ label, items, selectedIdx, onSelect }:{
   const [open, setOpen] = useState(false);
   const sel = items[selectedIdx];
   return (
-    <div style={{ position:'relative', width:'100%', userSelect:'none' }}>
+    <div style={{ position: 'relative', width: '100%', userSelect: 'none' }}>
       <button
         onClick={() => setOpen(o => !o)}
         style={{
-          width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 10px',
-          background:'var(--input-bg)', border:`1px solid ${open ? 'var(--gold)' : 'var(--border)'}`,
-          borderRadius:6, cursor:'pointer', transition:'border-color .12s',
+          width: '100%', display: 'flex', alignItems: 'center', gap: 6,
+          padding: '3px 7px', height: 28,
+          background: 'var(--input-bg)',
+          border: `1px solid ${open ? '#bfb8b0' : 'var(--border)'}`,
+          borderRadius: 4, cursor: 'pointer', transition: 'border-color .12s',
         }}
       >
         {sel
-          ? <img src={sel.dataUrl} alt="" style={{ width:26, height:26, imageRendering:'pixelated', borderRadius:3, border:'1px solid var(--border)', flexShrink:0 }} />
-          : <div style={{ width:26, height:26, borderRadius:3, border:'1px solid var(--border)', background:'var(--background)', flexShrink:0,
-              backgroundImage:'repeating-linear-gradient(45deg,var(--border) 0,var(--border) 1px,transparent 0,transparent 50%)', backgroundSize:'4px 4px' }} />
+          ? <img src={sel.dataUrl} alt="" style={{ width: 22, height: 22, imageRendering: 'pixelated', borderRadius: 2, border: '1px solid var(--border)', flexShrink: 0 }} />
+          : <div style={{ width: 22, height: 22, borderRadius: 2, border: '1px solid var(--border)', background: 'var(--background)', flexShrink: 0,
+              backgroundImage: 'repeating-linear-gradient(45deg,var(--border) 0,var(--border) 1px,transparent 0,transparent 50%)', backgroundSize: '4px 4px' }} />
         }
-        <span style={{ flex:1, textAlign:'left', fontSize:12, fontWeight:600, color:'var(--foreground)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+        <span style={{ flex: 1, textAlign: 'left', fontSize: 9, fontFamily: "'Inter', 'Segoe UI', sans-serif", color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {sel ? sel.name : label}
         </span>
-        <span style={{ fontSize:10, color:'var(--text-tertiary)' }}>▼</span>
+        <span style={{ fontSize: 9, color: 'var(--text-secondary)' }}>▼</span>
       </button>
 
       {open && (
         <>
-          <div style={{ position:'fixed', inset:0, zIndex:40 }} onClick={() => setOpen(false)} />
+          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setOpen(false)} />
           <div style={{
-            position:'absolute', left:0, top:'calc(100% + 2px)', zIndex:50, width:'100%',
-            background:'var(--card)', border:'1px solid var(--border)', borderRadius:7,
-            boxShadow:'0 4px 20px rgba(0,0,0,.25)', maxHeight:240, overflowY:'auto',
+            position: 'absolute', left: 0, top: 'calc(100% + 2px)', zIndex: 50, width: '100%',
+            background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 5,
+            boxShadow: '0 4px 16px rgba(0,0,0,.18)', maxHeight: 220, overflowY: 'auto',
           }}>
             <div onClick={() => { onSelect(-1); setOpen(false); }}
-              style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', cursor:'pointer', fontSize:12, color:'var(--text-tertiary)', fontStyle:'italic' }}
-              onMouseEnter={e=>(e.currentTarget.style.background='var(--panel)')}
-              onMouseLeave={e=>(e.currentTarget.style.background='')}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', cursor: 'pointer',
+                fontSize: 9, fontFamily: "'Inter', 'Segoe UI', sans-serif", color: 'var(--text-secondary)', fontStyle: 'italic' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--panel)')}
+              onMouseLeave={e => (e.currentTarget.style.background = '')}
             >— None —</div>
             {items.map((item, idx) => (
               <div key={idx} onClick={() => { onSelect(idx); setOpen(false); }}
                 style={{
-                  display:'flex', alignItems:'center', gap:10, padding:'6px 12px', cursor:'pointer', fontSize:12,
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px', cursor: 'pointer',
+                  fontSize: 9, fontFamily: "'Inter', 'Segoe UI', sans-serif",
                   background: idx === selectedIdx ? 'var(--panel)' : undefined,
                 }}
-                onMouseEnter={e=>{ if(idx!==selectedIdx) e.currentTarget.style.background='var(--panel)'; }}
-                onMouseLeave={e=>{ if(idx!==selectedIdx) e.currentTarget.style.background=''; }}
+                onMouseEnter={e => { if(idx !== selectedIdx) e.currentTarget.style.background = 'var(--panel)'; }}
+                onMouseLeave={e => { if(idx !== selectedIdx) e.currentTarget.style.background = ''; }}
               >
-                <img src={item.dataUrl} alt="" style={{ width:28, height:28, imageRendering:'pixelated', border:'1px solid var(--border)', borderRadius:3, flexShrink:0 }} />
-                <span style={{ color:'var(--foreground)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.name}</span>
+                <img src={item.dataUrl} alt="" style={{ width: 22, height: 22, imageRendering: 'pixelated', border: '1px solid var(--border)', borderRadius: 2, flexShrink: 0 }} />
+                <span style={{ color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
               </div>
             ))}
             {items.length === 0 && (
-              <div style={{ padding:'12px 14px', fontSize:12, color:'var(--text-tertiary)' }}>No bitmaps in folder</div>
+              <div style={{ padding: '10px 12px', fontSize: 9, color: 'var(--text-secondary)' }}>No bitmaps in folder</div>
             )}
           </div>
         </>
@@ -107,100 +111,125 @@ export default function LeftPanel({
 }: LeftPanelProps) {
   const uploadRef = useRef<HTMLInputElement>(null);
 
+  /* ── helpers ── */
   const Num = (v: number, cb: (n:number)=>void, min=1, max=9999) => (
     <input type="number" value={v} min={min} max={max}
       onChange={e => cb(Math.max(min, Math.min(max, +e.target.value)))}
-      style={{ width:56, height:28, fontSize:12, fontFamily:'monospace', fontWeight:700,
-        textAlign:'center', background:'var(--input-bg)', border:'1px solid var(--border)',
-        borderRadius:4, color:'var(--foreground)', outline:'none', padding:'0 2px' }}
+      style={{
+        width: 38, height: 22, fontSize: 9.5,
+        fontFamily: "'JetBrains Mono', 'Consolas', monospace",
+        textAlign: 'center', background: 'var(--input-bg)',
+        border: '1px solid var(--border)', borderRadius: 3,
+        color: 'var(--foreground)', outline: 'none', padding: '0 2px',
+      }}
     />
   );
 
   const Chk = ({ checked, onChange, label }:{checked:boolean; onChange:(v:boolean)=>void; label:string}) => (
-    <label style={{ display:'flex', alignItems:'center', gap:7, cursor:'pointer', fontSize:13, fontWeight:500, color:'var(--foreground)' }}>
-      <input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)}
-        style={{ width:14, height:14, accentColor:'var(--gold)', cursor:'pointer', flexShrink:0 }} />
+    <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer',
+      fontSize: 9, fontWeight: 600, color: 'var(--foreground)',
+      fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)}
+        style={{ width: 12, height: 12, accentColor: '#7a6a55', cursor: 'pointer', flexShrink: 0 }} />
       {label}
     </label>
   );
 
-  const SecHead = ({ text }: { text: string }) => (
-    <div style={{ display:'flex', alignItems:'center', gap:6, margin:'2px 0 8px' }}>
-      <div style={{ height:1, flex:1, background:'var(--panel-border)' }} />
-      <span style={{ fontSize:10, fontFamily:'monospace', fontWeight:800, letterSpacing:'0.16em',
-        textTransform:'uppercase', color:'var(--gold-dim)', flexShrink:0 }}>
-        {text}
-      </span>
-      <div style={{ height:1, flex:1, background:'var(--panel-border)' }} />
+  /* sec-title style — matching HTML */
+  const SecTitle = ({ text }: { text: string }) => (
+    <div style={{
+      fontFamily: "'JetBrains Mono', 'Consolas', monospace",
+      fontSize: 7, fontWeight: 700, letterSpacing: '1.5px',
+      color: '#bbb0a0', textTransform: 'uppercase',
+      marginBottom: 5, paddingTop: 2,
+    }}>
+      {text}
     </div>
   );
 
+  /* flabel style */
   const Lbl = ({ text }: { text: string }) => (
-    <span style={{ fontSize:12, fontWeight:600, color:'var(--text-secondary)', whiteSpace:'nowrap' }}>{text}</span>
+    <span style={{
+      fontSize: 9, fontWeight: 600, color: '#8a8078',
+      fontFamily: "'Inter', 'Segoe UI', sans-serif", whiteSpace: 'nowrap',
+    }}>{text}</span>
   );
 
   const Row = ({ children, between=false }: { children: React.ReactNode; between?: boolean }) => (
-    <div style={{ display:'flex', alignItems:'center', gap:7, justifyContent: between ? 'space-between' : undefined }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: between ? 'space-between' : undefined }}>
       {children}
     </div>
   );
 
-  const Div = () => <div style={{ height:1, background:'var(--panel-border)', margin:'7px 0' }} />;
+  /* section divider */
+  const Sec = ({ children }: { children: React.ReactNode }) => (
+    <div style={{ padding: '5px 0', borderBottom: '1px solid #e4dfd8' }}>
+      {children}
+    </div>
+  );
+
+  const Div = () => <div style={{ height: 1, background: '#e4dfd8', margin: '5px 0' }} />;
 
   return (
     <div style={{
-      width:270, minWidth:270, display:'flex', flexDirection:'column', overflowY:'auto',
-      borderRight:'1px solid var(--panel-border)', padding:'8px 10px', gap:0,
-      background:'var(--panel)',
+      width: 240, minWidth: 240, display: 'flex', flexDirection: 'column',
+      overflowY: 'auto', borderRight: '1px solid #ddd8d0',
+      padding: '3px 5px', gap: 0,
+      background: '#f5f2ee', fontSize: 11,
     }}>
 
       {/* ── Upload ── */}
-      <div style={{ paddingBottom:10, marginBottom:6, borderBottom:'1px solid var(--panel-border)' }}>
+      <Sec>
         <button onClick={() => uploadRef.current?.click()}
           style={{
-            width:'100%', height:40, display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-            background:'var(--gold)', border:'none', borderRadius:7, cursor:'pointer',
-            fontFamily:'monospace', fontWeight:800, fontSize:13, letterSpacing:'0.08em',
-            color:'#0e0c08', transition:'opacity .12s', boxShadow:'0 1px 4px rgba(0,0,0,.2)',
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 4,
+            cursor: 'pointer', fontFamily: "'JetBrains Mono', 'Consolas', monospace",
+            fontWeight: 600, fontSize: 9.5, letterSpacing: '0.04em',
+            color: '#3a3530', height: 26, transition: 'opacity .12s',
           }}
-          onMouseEnter={e=>e.currentTarget.style.opacity='0.85'}
-          onMouseLeave={e=>e.currentTarget.style.opacity='1'}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
-          <Upload size={15} /> Upload Image
+          <Upload size={13} /> Upload Image
         </button>
         <input ref={uploadRef} type="file" accept="image/*" className="hidden"
-          onChange={e => { const f=e.target.files?.[0]; if(f){onImageUpload(f); e.target.value='';} }} />
-      </div>
+          onChange={e => { const f = e.target.files?.[0]; if(f){ onImageUpload(f); e.target.value=''; } }} />
+      </Sec>
 
-      {/* ── Bitmap Library (no header) ── */}
-      <div style={{ paddingBottom:10, marginBottom:6, borderBottom:'1px solid var(--panel-border)' }}>
-        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+      {/* ── Bitmap Library ── */}
+      <Sec>
+        <SecTitle text="Bitmap Library" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Lbl text="Motif Weave" />
             <ThumbSelect label="— Select —" items={motifBitmaps} selectedIdx={motifBitmapIdx} onSelect={onMotifBitmapSelect} />
           </div>
           <Div />
-          <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Lbl text="Fill Tool Weave" />
             <ThumbSelect label="— Select —" items={fillBitmaps} selectedIdx={fillBitmapIdx} onSelect={onFillBitmapSelect} />
           </div>
         </div>
-      </div>
+      </Sec>
 
-      {/* ── Fill (no header) ── */}
-      <div style={{ paddingBottom:10, marginBottom:6, borderBottom:'1px solid var(--panel-border)' }}>
-        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-          <select value={fillMode} onChange={e=>onFillModeChange(e.target.value as FillMode)}
-            style={{ width:'100%', height:30, fontSize:12, padding:'0 8px', borderRadius:5,
-              background:'var(--input-bg)', border:'1px solid var(--border)', color:'var(--foreground)',
-              outline:'none', cursor:'pointer', fontFamily:'monospace', fontWeight:600 }}>
+      {/* ── Fill ── */}
+      <Sec>
+        <SecTitle text="Fill" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <select value={fillMode} onChange={e => onFillModeChange(e.target.value as FillMode)}
+            style={{
+              width: '100%', height: 22, fontSize: 9.5, padding: '0 6px', borderRadius: 3,
+              background: 'var(--input-bg)', border: '1px solid var(--border)',
+              color: 'var(--foreground)', outline: 'none', cursor: 'pointer',
+              fontFamily: "'JetBrains Mono', 'Consolas', monospace",
+            }}>
             <option value="WHOLE">Whole</option>
             <option value="INNER">Inside</option>
             <option value="BORDER">Border</option>
             <option value="BORDER8">Vert Border ≥</option>
             <option value="INNER_BORDER8">Inside + Vert</option>
           </select>
-
           <Row between><Lbl text="Border Len" />{Num(vBorderLen, onVBorderLenChange, 1, 999)}</Row>
           <Chk checked={use8} onChange={onUse8Change} label="8-Connected" />
           <Div />
@@ -208,61 +237,65 @@ export default function LeftPanel({
           <Div />
           <Row between><Chk checked={vertFloat} onChange={onVertFloatChange} label="Float Fill" />{Num(vertFloatLen, onVertFloatLenChange, 1, 9999)}</Row>
           {floatCountText && (
-            <div style={{ fontSize:11, color:'var(--text-secondary)', fontFamily:'monospace' }}>{floatCountText}</div>
+            <div style={{ fontSize: 9, color: '#8a8078', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{floatCountText}</div>
           )}
         </div>
-      </div>
+      </Sec>
 
       {/* ── Tools ── */}
-      <div style={{ paddingBottom:10, marginBottom:6, borderBottom:'1px solid var(--panel-border)' }}>
-        <SecHead text="Tools" />
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
+      <Sec>
+        <SecTitle text="Tools" />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
           {TOOLS.map(({ key, icon, label, title }) => {
             const active = activeTool === key;
             return (
               <button key={key} onClick={() => onToolChange(key)} title={title}
                 style={{
-                  display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-                  gap:4, padding:'8px 4px', minHeight:54, borderRadius:7, cursor:'pointer',
-                  border:`1px solid ${active ? 'var(--gold)' : 'var(--border)'}`,
-                  background: active
-                    ? 'linear-gradient(135deg,#2a1e0a,#1e1508)'
-                    : 'var(--input-bg)',
-                  boxShadow: active ? 'inset 0 1px 4px rgba(0,0,0,.4), 0 0 0 1px var(--gold-dim)' : 'none',
-                  transition:'all .12s',
-                  color: active ? 'var(--gold)' : 'var(--text-secondary)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 3, padding: '6px 4px', minHeight: 26, borderRadius: 4, cursor: 'pointer',
+                  border: `1px solid ${active ? '#2a2520' : '#d4cfc8'}`,
+                  background: active ? '#3a3530' : '#eceae6',
+                  boxShadow: active ? 'inset 0 1px 3px rgba(0,0,0,.35)' : 'none',
+                  transition: 'all .12s',
+                  color: active ? '#ffffff' : '#3a3530',
                 }}
               >
-                {icon}
-                <span style={{ fontSize:10, fontWeight:800, letterSpacing:'0.1em', textTransform:'uppercase',
-                  color: active ? 'var(--gold)' : 'var(--text-tertiary)' }}>{label}</span>
+                {/* Clone icon with color override */}
+                <span style={{ color: active ? '#ffffff' : '#3a3530', display: 'flex' }}>
+                  {icon}
+                </span>
+                <span style={{
+                  fontSize: 7, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+                  fontFamily: "'JetBrains Mono', 'Consolas', monospace",
+                  color: active ? '#ffffff' : '#8a8078',
+                }}>{label}</span>
               </button>
             );
           })}
         </div>
-      </div>
+      </Sec>
 
       {/* ── Pen Color ── */}
-      <div style={{ paddingBottom:10, marginBottom:6, borderBottom:'1px solid var(--panel-border)' }}>
-        <SecHead text="Pen Color" />
-        <div style={{ display:'flex', alignItems:'center', gap:9 }}>
-          <div style={{ width:30, height:30, borderRadius:5, background:penColorHex, border:'1px solid var(--border)', flexShrink:0 }} />
-          <input type="color" value={penColorHex} onChange={e=>onPenColorChange(e.target.value)}
-            style={{ width:36, height:28, padding:0, border:0, background:'transparent', cursor:'pointer', outline:'none' }} title="Pick pen color" />
-          <span style={{ fontSize:11, color:'var(--text-tertiary)', fontFamily:'monospace', letterSpacing:'0.06em' }}>{penColorHex}</span>
+      <Sec>
+        <SecTitle text="Pen Color" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div style={{ width: 22, height: 22, borderRadius: 3, background: penColorHex, border: '1px solid var(--border)', flexShrink: 0 }} />
+          <input type="color" value={penColorHex} onChange={e => onPenColorChange(e.target.value)}
+            style={{ width: 30, height: 22, padding: 0, border: 0, background: 'transparent', cursor: 'pointer', outline: 'none' }} title="Pick pen color" />
+          <span style={{ fontSize: 9, color: '#8a8078', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{penColorHex}</span>
         </div>
-      </div>
+      </Sec>
 
       {/* ── Highlight Float ── */}
-      <div style={{ paddingBottom:10 }}>
-        <SecHead text="Highlight Float" />
-        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+      <div style={{ padding: '5px 0' }}>
+        <SecTitle text="Highlight Float" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <Row between><Chk checked={highlightActive} onChange={onHighlightChange} label="Show" />{Num(highlightLen, onHighlightLenChange, 1, 9999)}</Row>
           <Row>
             <Lbl text="Color" />
-            <input type="color" value={highlightColor} onChange={e=>onHighlightColorChange(e.target.value)}
-              style={{ width:36, height:26, padding:0, border:0, background:'transparent', cursor:'pointer', outline:'none' }} />
-            <span style={{ fontSize:11, color:'var(--text-tertiary)', fontFamily:'monospace' }}>{highlightColor}</span>
+            <input type="color" value={highlightColor} onChange={e => onHighlightColorChange(e.target.value)}
+              style={{ width: 30, height: 22, padding: 0, border: 0, background: 'transparent', cursor: 'pointer', outline: 'none' }} />
+            <span style={{ fontSize: 9, color: '#8a8078', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{highlightColor}</span>
           </Row>
         </div>
       </div>

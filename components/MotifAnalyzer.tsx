@@ -58,7 +58,7 @@ export default function MotifAnalyzer() {
         canUndo={engine.canUndo}
         canRedo={engine.canRedo}
       />
-      <div style={{ display:'flex', flex:1, overflow:'hidden', marginTop:56 }}>
+      <div style={{ display:'flex', flex:1, overflow:'hidden', marginTop:38 }}>
         <LeftPanel
           motifBitmaps={motifBitmaps}
           fillBitmaps={fillBitmaps}
