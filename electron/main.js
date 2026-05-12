@@ -222,6 +222,60 @@ ipcMain.handle('show-save-dialog', async (_event, { defaultName }) => {
 // ── IPC: renderer requests fresh bitmap list ──
 ipcMain.on('request-bitmaps', sendBitmaps);
 
+// ── IPC: save generic file ──
+ipcMain.handle('save-file', async (_event, { fileName, buffer }) => {
+  try {
+    fs.writeFileSync(fileName, Buffer.from(buffer));
+    return { success: true, path: fileName };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// ── IPC: save dialog with format ──
+ipcMain.handle('show-save-dialog-format', async (_event, { defaultName, format }) => {
+  const { dialog } = require('electron');
+  const filters = {
+    png:  [{ name: 'PNG Image',           extensions: ['png']        }],
+    tiff: [{ name: 'TIFF Image',          extensions: ['tiff', 'tif']}],
+    maf:  [{ name: 'Motif Analyzer File', extensions: ['maf']        }],
+  };
+  return dialog.showSaveDialog(mainWindow, {
+    defaultPath: path.join(require('os').homedir(), 'Downloads', defaultName),
+    filters: filters[format] || filters.png,
+  });
+});
+
+// ── IPC: open project dialog ──
+ipcMain.handle('show-open-project-dialog', async () => {
+  const { dialog } = require('electron');
+  const result = await dialog.showOpenDialog(mainWindow, {
+    filters: [{ name: 'Motif Analyzer File', extensions: ['maf'] }],
+    properties: ['openFile'],
+  });
+  return { canceled: result.canceled, filePath: result.filePaths?.[0] };
+});
+
+// ── IPC: save project JSON ──
+ipcMain.handle('save-project', async (_event, { filePath, data }) => {
+  try {
+    fs.writeFileSync(filePath, data, 'utf8');
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// ── IPC: load project JSON ──
+ipcMain.handle('load-project', async (_event, { filePath }) => {
+  try {
+    const data = fs.readFileSync(filePath, 'utf8');
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
 app.whenReady().then(() => {
   ensureFolders();
   registerProtocol();

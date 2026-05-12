@@ -13,7 +13,6 @@ export default function MotifAnalyzer() {
   const [motifBitmapIdx, setMotifBitmapIdx] = useState(-1);
   const [fillBitmapIdx,  setFillBitmapIdx]  = useState(-1);
 
-  // ── Electron IPC: listen for bitmap updates from main process ──
   useEffect(() => {
     if (!window.electronAPI) return;
     window.electronAPI.requestBitmaps();
@@ -36,22 +35,30 @@ export default function MotifAnalyzer() {
     engine.setFillToolBitmap(item ? item.dataUrl : null);
   }, [fillBitmapIdx, fillBitmaps]);
 
+  function handleExport(fmt: 'bmp' | 'png' | 'tiff') {
+    if (fmt === 'bmp')  engine.exportBMP('motif_export');
+    if (fmt === 'png')  engine.exportPNG('motif_export');
+    if (fmt === 'tiff') engine.exportTIFF('motif_export');
+  }
+
   return (
-    <div className="w-screen h-screen flex flex-col bg-background text-foreground overflow-hidden">
+    <div style={{ width:'100vw', height:'100vh', display:'flex', flexDirection:'column', overflow:'hidden',
+      background:'var(--background)', color:'var(--foreground)' }}>
       <Header
         statusMessage={engine.status}
         statusType={engine.statusType}
         phaseStatus={engine.phaseStatus}
         onUndo={engine.undo}
         onRedo={engine.redo}
-        onExport={() => engine.exportBMP('motif_export')}
+        onExport={handleExport}
         onClearFill={engine.clearFill}
         onReset={engine.resetAll}
+        onSaveProject={engine.saveProject}
+        onLoadProject={engine.loadProject}
         canUndo={engine.canUndo}
         canRedo={engine.canRedo}
       />
-
-      <div className="flex flex-1 overflow-hidden" style={{ marginTop: 44 }}>
+      <div style={{ display:'flex', flex:1, overflow:'hidden', marginTop:46 }}>
         <LeftPanel
           motifBitmaps={motifBitmaps}
           fillBitmaps={fillBitmaps}
@@ -86,7 +93,6 @@ export default function MotifAnalyzer() {
           onPenColorChange={engine.updatePenColor}
           floatCountText={engine.floatCountText}
         />
-
         <CanvasArea
           canvasRef={engine.canvasRef}
           overlayRef={engine.overlayRef}
@@ -99,6 +105,7 @@ export default function MotifAnalyzer() {
           onFitCanvas={engine.fitCanvas}
           onZoom1x={engine.zoom1x}
           onZoomStep={engine.zoomStep}
+          onZoomTo={engine.zoomTo}
           onViewportMouseDown={engine.onViewportMouseDown}
           onViewportMouseMove={engine.onViewportMouseMove}
           onViewportDrop={engine.onViewportDrop}

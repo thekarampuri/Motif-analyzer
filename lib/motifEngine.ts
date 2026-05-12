@@ -472,3 +472,37 @@ export function pointInPolygon(px: number, py: number, pts: PixelXY[]): boolean 
   }
   return inside;
 }
+
+// ── TIFF encoder (uncompressed RGB) ──
+export function canvasToTIFF(ctx: CanvasRenderingContext2D, w: number, h: number): Uint8Array {
+  const src = ctx.getImageData(0, 0, w, h).data;
+  const rgb = new Uint8Array(w * h * 3);
+  for (let i = 0; i < w * h; i++) { rgb[i*3]=src[i*4]; rgb[i*3+1]=src[i*4+1]; rgb[i*3+2]=src[i*4+2]; }
+
+  const NUM = 10;
+  const IFD_OFF  = 8;
+  const IFD_SIZE = 2 + NUM * 12 + 4;
+  const BPS_OFF  = IFD_OFF + IFD_SIZE;
+  const IMG_OFF  = BPS_OFF + 6;
+  const buf = new ArrayBuffer(IMG_OFF + rgb.length);
+  const v   = new DataView(buf);
+  const out = new Uint8Array(buf);
+
+  out[0]=0x49; out[1]=0x49;
+  v.setUint16(2, 42, true);
+  v.setUint32(4, IFD_OFF, true);
+
+  let p = IFD_OFF;
+  v.setUint16(p, NUM, true); p += 2;
+  const e = (tag: number, type: number, count: number, val: number) => {
+    v.setUint16(p, tag, true); v.setUint16(p+2, type, true);
+    v.setUint32(p+4, count, true); v.setUint32(p+8, val, true); p += 12;
+  };
+  e(256,4,1,w); e(257,4,1,h); e(258,3,3,BPS_OFF); e(259,3,1,1); e(262,3,1,2);
+  e(273,4,1,IMG_OFF); e(277,3,1,3); e(278,4,1,h); e(279,4,1,rgb.length); e(284,3,1,1);
+  v.setUint32(p, 0, true);
+  v.setUint16(BPS_OFF,0,true); v.setUint8(BPS_OFF,8); v.setUint8(BPS_OFF+1,0);
+  v.setUint8(BPS_OFF+2,8); v.setUint8(BPS_OFF+3,0); v.setUint8(BPS_OFF+4,8);
+  out.set(rgb, IMG_OFF);
+  return out;
+}

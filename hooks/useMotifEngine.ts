@@ -9,8 +9,9 @@ import {
   buildCleanBW, binarise, findComponents, getBorder, skeletonize,
   buildFillCache, buildFillCacheFlipped, buildMotifResult, getInside,
   getPhase1Pixels, computeFloatPixelSet, computeFloatData,
-  computeHighlightPixels, canvasToBMP, bresenhamLine, pointInPolygon,
+  computeHighlightPixels, canvasToBMP, canvasToTIFF, bresenhamLine, pointInPolygon,
 } from '@/lib/motifEngine';
+import type { ProjectFile } from '@/lib/types';
 
 const MAX_HISTORY = 100;
 const MAX_SCALE   = 32;
@@ -69,6 +70,7 @@ function createInitialState(): EngineState {
 
 export function useMotifEngine() {
   const eng = useRef<EngineState>(createInitialState());
+  const pendingRestoreRef = useRef<ProjectFile | null>(null);
   const canvasRef  = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -430,7 +432,13 @@ export function useMotifEngine() {
     st(`${w}×${h} px  |  ${e.motifResults.length} motif(s) detected`, 'ok');
     syncOverlay();
 
-    setTimeout(() => { applyPhase1(); redraw(); setPhaseStatus('⬤ Ready'); }, 0);
+    setTimeout(() => {
+      applyPhase1(); redraw(); setPhaseStatus('⬤ Ready');
+      if (pendingRestoreRef.current) {
+        _applyProjectRestore(pendingRestoreRef.current);
+        pendingRestoreRef.current = null;
+      }
+    }, 0);
   }
 
   // ── Load image ──
@@ -1068,6 +1076,199 @@ export function useMotifEngine() {
     }
   }, []);
 
+  // ── Zoom to specific value ──
+  const zoomTo = useCallback((v: number) => {
+    const e = eng.current; if (!e.originalImage) return;
+    const vp = viewportRef.current; const canvas = canvasRef.current; if (!vp || !canvas) return;
+    const clamped = Math.max(1, Math.min(MAX_SCALE, v));
+    const cx = vp.scrollLeft + vp.clientWidth  / 2;
+    const cy = vp.scrollTop  + vp.clientHeight / 2;
+    const oldScale = e.scale;
+    e.scale = clamped;
+    applyScale(clamped);
+    const ratio = clamped / oldScale;
+    vp.scrollLeft = cx * ratio - vp.clientWidth  / 2;
+    vp.scrollTop  = cy * ratio - vp.clientHeight / 2;
+  }, []);
+
+  // ── Export PNG ──
+  const exportPNG = useCallback(async (fileName?: string) => {
+    const e = eng.current; if (!e.originalImage) { st('No image to export', 'error'); return; }
+    const canvas = canvasRef.current!;
+    const name = (fileName || 'motif_export') + '.png';
+    st('Building PNG…', 'busy');
+    canvas.toBlob(async (blob) => {
+      if (!blob) { st('PNG export failed', 'error'); return; }
+      const buf = await blob.arrayBuffer();
+      if (window.electronAPI) {
+        const result = await window.electronAPI.showSaveDialogFormat(name, 'png');
+        if (result.canceled || !result.filePath) { st('Export cancelled', ''); return; }
+        const res = await window.electronAPI.saveFile(result.filePath, buf);
+        if (res.success) st(`Saved: ${result.filePath}`, 'ok');
+        else st(`Export error: ${res.error}`, 'error');
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = name;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        st(`Downloaded: ${name}`, 'ok');
+      }
+    }, 'image/png');
+  }, []);
+
+  // ── Export TIFF ──
+  const exportTIFF = useCallback(async (fileName?: string) => {
+    const e = eng.current; if (!e.originalImage) { st('No image to export', 'error'); return; }
+    const c = ctx(); if (!c) return;
+    const canvas = canvasRef.current!;
+    const name = (fileName || 'motif_export') + '.tiff';
+    st('Building TIFF…', 'busy');
+    const tiffBytes = canvasToTIFF(c, canvas.width, canvas.height);
+    if (window.electronAPI) {
+      const result = await window.electronAPI.showSaveDialogFormat(name, 'tiff');
+      if (result.canceled || !result.filePath) { st('Export cancelled', ''); return; }
+      const res = await window.electronAPI.saveFile(result.filePath, tiffBytes.buffer);
+      if (res.success) st(`Saved: ${result.filePath}`, 'ok');
+      else st(`Export error: ${res.error}`, 'error');
+    } else {
+      const blob = new Blob([tiffBytes], { type: 'image/tiff' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      st(`Downloaded: ${name}`, 'ok');
+    }
+  }, []);
+
+  // ── Save project ──
+  const saveProject = useCallback(async () => {
+    const e = eng.current; if (!e.originalImage) { st('No image to save', 'error'); return; }
+    const canvas = canvasRef.current!;
+    st('Saving project…', 'busy');
+    const tmpC = document.createElement('canvas');
+    tmpC.width = canvas.width; tmpC.height = canvas.height;
+    tmpC.getContext('2d')!.putImageData(e.originalImage, 0, 0);
+    const imageB64 = tmpC.toDataURL('image/png');
+    const payload: ProjectFile = {
+      version: 1,
+      image: imageB64,
+      erasedSet:   [...e.erasedSet],
+      motifSides:  e.motifResults.map(m => m.side),
+      manualFillRegions: e.manualFillRegions.map(r => ({
+        pixelSet: [...r.pixelSet], pixels: r.pixels, pixelsFlipped: r.pixelsFlipped, side: r.side,
+      })),
+      bakedFloatRegions: e.bakedFloatRegions.map(r => ({
+        motifIdx: e.motifResults.indexOf(r.motif),
+        pixelSet: [...r.pixelSet], pixels: r.pixels, pixelsFlipped: r.pixelsFlipped,
+        isFillTool: r.isFillTool, side: r.side,
+      })),
+      penEdits: [...e.penEdits.entries()],
+      settings: {
+        fillMode: fillModeRef.current, vBorderLen: vBorderLenRef.current,
+        use8: use8Ref.current, bndSkip: bndSkipRef.current, bndSkipPx: bndSkipPxRef.current,
+        vertFloat: vertFloatRef.current, vertFloatLen: vertFloatLenRef.current,
+        highlightLen: highlightLenRef.current, highlightActive: e.highlightActive,
+        highlightColor: highlightColorRef.current, penColorHex: penColorHex,
+      },
+    };
+    const json = JSON.stringify(payload);
+    if (window.electronAPI) {
+      const result = await window.electronAPI.showSaveDialogFormat('project.maf', 'maf');
+      if (result.canceled || !result.filePath) { st('Save cancelled', ''); return; }
+      const res = await window.electronAPI.saveProject(result.filePath, json);
+      if (res.success) st(`Project saved: ${result.filePath}`, 'ok');
+      else st(`Save error: ${res.error}`, 'error');
+    } else {
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'project.maf';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      st('Project downloaded', 'ok');
+    }
+  }, [penColorHex]);
+
+  // ── Load project ──
+  const loadProject = useCallback(async () => {
+    if (window.electronAPI) {
+      const pick = await window.electronAPI.showOpenProjectDialog();
+      if (pick.canceled || !pick.filePath) return;
+      const res = await window.electronAPI.loadProject(pick.filePath);
+      if (!res.success || !res.data) { st(`Load error: ${res.error}`, 'error'); return; }
+      _loadProjectFromJSON(res.data);
+    } else {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = '.maf,application/json';
+      input.onchange = () => {
+        const file = input.files?.[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => { if (e.target?.result) _loadProjectFromJSON(e.target.result as string); };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+  }, []);
+
+  function _loadProjectFromJSON(json: string) {
+    try {
+      const data: ProjectFile = JSON.parse(json);
+      if (data.version !== 1) { st('Unsupported project version', 'error'); return; }
+      pendingRestoreRef.current = data;
+      // Restore settings immediately so analysis uses them
+      setFillMode(data.settings.fillMode); fillModeRef.current = data.settings.fillMode;
+      setVBorderLen(data.settings.vBorderLen); vBorderLenRef.current = data.settings.vBorderLen;
+      setUse8(data.settings.use8); use8Ref.current = data.settings.use8;
+      setBndSkip(data.settings.bndSkip); bndSkipRef.current = data.settings.bndSkip;
+      setBndSkipPx(data.settings.bndSkipPx); bndSkipPxRef.current = data.settings.bndSkipPx;
+      setVertFloat(data.settings.vertFloat); vertFloatRef.current = data.settings.vertFloat;
+      setVertFloatLen(data.settings.vertFloatLen); vertFloatLenRef.current = data.settings.vertFloatLen;
+      setHighlightLen(data.settings.highlightLen); highlightLenRef.current = data.settings.highlightLen;
+      setHighlightColor(data.settings.highlightColor); highlightColorRef.current = data.settings.highlightColor;
+      updatePenColor(data.settings.penColorHex);
+      // Load image — analysis runs, then pendingRestoreRef is applied
+      const img = new Image();
+      img.onload = () => {
+        const canvas = canvasRef.current; if (!canvas) return;
+        canvas.width = img.width; canvas.height = img.height;
+        const c = canvas.getContext('2d', { willReadFrequently: true })!;
+        c.drawImage(img, 0, 0);
+        const e = eng.current;
+        e.originalImage = new ImageData(new Uint8ClampedArray(c.getImageData(0,0,img.width,img.height).data), img.width, img.height);
+        c.putImageData(e.originalImage, 0, 0);
+        e.undoStack = []; e.redoStack = []; updateUndoButtons();
+        setHasImage(true);
+        st(`${img.width}×${img.height} px — restoring…`, 'busy');
+        setPhaseStatus('⬤ Restoring…');
+        fitCanvas(); syncOverlay();
+        setTimeout(runAnalysis, 40);
+      };
+      img.onerror = () => st('Error loading project image', 'error');
+      img.src = data.image;
+    } catch {
+      st('Invalid project file', 'error');
+    }
+  }
+
+  function _applyProjectRestore(data: ProjectFile) {
+    const e = eng.current;
+    e.erasedSet = new Set(data.erasedSet);
+    data.motifSides.forEach((s, i) => { if (e.motifResults[i]) e.motifResults[i].side = s; });
+    e.manualFillRegions = data.manualFillRegions.map(r => ({
+      pixelSet: new Set(r.pixelSet), pixels: r.pixels, pixelsFlipped: r.pixelsFlipped, side: r.side,
+    }));
+    e.bakedFloatRegions = data.bakedFloatRegions.map(r => ({
+      motif: e.motifResults[r.motifIdx] ?? e.motifResults[0],
+      pixelSet: new Set(r.pixelSet), pixels: r.pixels, pixelsFlipped: r.pixelsFlipped,
+      isFillTool: r.isFillTool, side: r.side,
+    }));
+    e.penEdits = new Map(data.penEdits);
+    if (data.settings.highlightActive) {
+      e.highlightActive = true; setHighlightActive(true);
+    }
+    applyPhase1(); redraw(); setPhaseStatus('⬤ Ready');
+    st('Project loaded', 'ok');
+  }
+
   // ── Reanalyse ──
   const reanalyse = useCallback(() => {
     if (!eng.current.originalImage) return;
@@ -1358,7 +1559,9 @@ export function useMotifEngine() {
     vertFloat, vertFloatLen, highlightLen, highlightActive, highlightColor,
     penColorHex, floatCountText, phaseStatus,
     // Actions
-    setActiveTool, undo, redo, clearFill, resetAll, exportBMP, runProcess,
+    setActiveTool, undo, redo, clearFill, resetAll,
+    exportBMP, exportPNG, exportTIFF,
+    saveProject, loadProject,
     handleImageFile, setMotifBitmap, setFillToolBitmap, reanalyse,
     updatePenColor, toggleHighlight,
     // Settings setters
@@ -1373,6 +1576,7 @@ export function useMotifEngine() {
     // Utilities
     hasImage,
     fitCanvas: () => fitCanvas(),
+    zoomTo,
     zoom1x: () => {
       const e = eng.current; if (!e.originalImage) return;
       e.scale = 1; applyScale(1);
