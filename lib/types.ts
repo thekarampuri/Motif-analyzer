@@ -64,6 +64,7 @@ export interface ElectronAPI {
   showOpenProjectDialog: () => Promise<{ canceled: boolean; filePath?: string }>;
   saveProject: (filePath: string, data: string) => Promise<{ success: boolean; error?: string }>;
   loadProject: (filePath: string) => Promise<{ success: boolean; data?: string; error?: string }>;
+  getLogo: () => Promise<{ found: boolean; dataUrl: string | null }>;
 }
 
 declare global {

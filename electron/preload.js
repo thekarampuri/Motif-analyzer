@@ -14,4 +14,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showOpenProjectDialog: ()               => ipcRenderer.invoke('show-open-project-dialog'),
   saveProject: (filePath, data)           => ipcRenderer.invoke('save-project', { filePath, data }),
   loadProject: (filePath)                 => ipcRenderer.invoke('load-project', { filePath }),
+  getLogo:     ()                         => ipcRenderer.invoke('get-logo'),
 });

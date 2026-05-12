@@ -22,6 +22,7 @@ protocol.registerSchemesAsPrivileged([{
 // ── Folders ──
 const MOTIF_WEAVE_DIR = 'C:\\MotifAnalyzer\\MotifWeave';
 const FILL_WEAVE_DIR  = 'C:\\MotifAnalyzer\\FillToolWeave';
+const LOGO_DIR        = 'C:\\MotifAnalyzer';
 const IMAGE_EXTS      = new Set(['.bmp', '.png', '.jpg', '.jpeg', '.gif', '.webp']);
 
 const MIME_TYPES = {
@@ -264,6 +265,27 @@ ipcMain.handle('save-project', async (_event, { filePath, data }) => {
   } catch (err) {
     return { success: false, error: err.message };
   }
+});
+
+// ── IPC: get business logo ──
+ipcMain.handle('get-logo', async () => {
+  const exts = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'];
+  for (const ext of exts) {
+    const candidate = path.join(LOGO_DIR, `logo${ext}`);
+    try {
+      const stat = fs.statSync(candidate);
+      if (!stat.isFile()) continue;
+      const buf  = fs.readFileSync(candidate);
+      const mime = ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg'
+                 : ext === '.png'  ? 'image/png'
+                 : ext === '.bmp'  ? 'image/bmp'
+                 : ext === '.gif'  ? 'image/gif'
+                 : ext === '.webp' ? 'image/webp'
+                 : 'image/png';
+      return { found: true, dataUrl: `data:${mime};base64,${buf.toString('base64')}` };
+    } catch (_) {}
+  }
+  return { found: false, dataUrl: null };
 });
 
 // ── IPC: load project JSON ──
