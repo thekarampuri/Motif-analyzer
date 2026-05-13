@@ -24,9 +24,10 @@ export default function Header({
   onSaveProject, onLoadProject,
   canUndo, canRedo,
 }: HeaderProps) {
-  const [theme,   setTheme]   = useState<'light'|'dark'>('light');
-  const [mounted, setMounted] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
+  const [theme,        setTheme]       = useState<'light'|'dark'>('light');
+  const [mounted,      setMounted]     = useState(false);
+  const [exportOpen,   setExportOpen]  = useState(false);
+  const [logoMissing,  setLogoMissing] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -95,8 +96,11 @@ export default function Header({
 
       {/* ── Logo ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <img src="/app-logo.png" alt="Logo"
-          style={{ width: 26, height: 26, objectFit: 'contain', display: 'block', flexShrink: 0 }} />
+        {logoMissing
+          ? <span style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1 }}>◈</span>
+          : <img src="/app-logo.png" alt="Logo" onError={() => setLogoMissing(true)}
+              style={{ width: 26, height: 26, objectFit: 'contain', display: 'block', flexShrink: 0 }} />
+        }
         <span style={{
           fontFamily: "'JetBrains Mono', 'Consolas', monospace",
           fontWeight: 700, fontSize: 11,

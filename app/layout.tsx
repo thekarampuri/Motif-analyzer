@@ -8,6 +8,7 @@ const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mon
 export const metadata: Metadata = {
   title: 'Motif Analyzer',
   description: 'Textile motif analysis and weave filling tool',
+  icons: { icon: '/app-logo.png', apple: '/app-logo.png' },
 }
 
 export default function RootLayout({
