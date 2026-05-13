@@ -141,7 +141,7 @@ export default function LeftPanel({
     <div style={{
       fontFamily: "'JetBrains Mono', 'Consolas', monospace",
       fontSize: 10, fontWeight: 700, letterSpacing: '1.5px',
-      color: '#bbb0a0', textTransform: 'uppercase',
+      color: 'var(--text-tertiary)', textTransform: 'uppercase',
       marginBottom: 5, paddingTop: 2,
     }}>
       {text}
@@ -151,7 +151,7 @@ export default function LeftPanel({
   /* flabel style */
   const Lbl = ({ text }: { text: string }) => (
     <span style={{
-      fontSize: 12, fontWeight: 600, color: '#8a8078',
+      fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)',
       fontFamily: "'Inter', 'Segoe UI', sans-serif", whiteSpace: 'nowrap',
     }}>{text}</span>
   );
@@ -164,19 +164,19 @@ export default function LeftPanel({
 
   /* section divider */
   const Sec = ({ children }: { children: React.ReactNode }) => (
-    <div style={{ padding: '5px 0', borderBottom: '1px solid #e4dfd8' }}>
+    <div style={{ padding: '5px 0', borderBottom: '1px solid var(--border)' }}>
       {children}
     </div>
   );
 
-  const Div = () => <div style={{ height: 1, background: '#e4dfd8', margin: '5px 0' }} />;
+  const Div = () => <div style={{ height: 1, background: 'var(--border)', margin: '5px 0' }} />;
 
   return (
     <div style={{
       width: 240, minWidth: 240, display: 'flex', flexDirection: 'column',
-      overflowY: 'auto', borderRight: '1px solid #ddd8d0',
+      overflowY: 'auto', borderRight: '1px solid var(--panel-border)',
       padding: '3px 5px', gap: 0,
-      background: '#f5f2ee', fontSize: 11,
+      background: 'var(--panel)', fontSize: 11,
     }}>
 
       {/* ── Upload ── */}
@@ -187,7 +187,7 @@ export default function LeftPanel({
             background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 4,
             cursor: 'pointer', fontFamily: "'JetBrains Mono', 'Consolas', monospace",
             fontWeight: 600, fontSize: 12, letterSpacing: '0.04em',
-            color: '#3a3530', height: 26, transition: 'opacity .12s',
+            color: 'var(--foreground)', height: 26, transition: 'opacity .12s',
           }}
           onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
           onMouseLeave={e => e.currentTarget.style.opacity = '1'}
@@ -238,7 +238,7 @@ export default function LeftPanel({
           <Div />
           <Row between><Chk checked={vertFloat} onChange={onVertFloatChange} label="Float Fill" />{Num(vertFloatLen, onVertFloatLenChange, 1, 9999)}</Row>
           {floatCountText && (
-            <div style={{ fontSize: 11, color: '#8a8078', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{floatCountText}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{floatCountText}</div>
           )}
         </div>
       </Sec>
@@ -255,20 +255,19 @@ export default function LeftPanel({
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                   gap: 3, padding: '6px 4px', minHeight: 26, borderRadius: 4, cursor: 'pointer',
                   border: `1px solid ${active ? '#2a2520' : '#d4cfc8'}`,
-                  background: active ? '#3a3530' : '#eceae6',
+                  background: active ? '#3a3530' : 'var(--input-bg)',
                   boxShadow: active ? 'inset 0 1px 3px rgba(0,0,0,.35)' : 'none',
                   transition: 'all .12s',
-                  color: active ? '#ffffff' : '#3a3530',
+                  color: active ? '#ffffff' : 'var(--foreground)',
                 }}
               >
-                {/* Clone icon with color override */}
-                <span style={{ color: active ? '#ffffff' : '#3a3530', display: 'flex' }}>
+                <span style={{ color: active ? '#ffffff' : 'var(--foreground)', display: 'flex' }}>
                   {icon}
                 </span>
                 <span style={{
                   fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
                   fontFamily: "'JetBrains Mono', 'Consolas', monospace",
-                  color: active ? '#ffffff' : '#8a8078',
+                  color: active ? '#ffffff' : 'var(--text-secondary)',
                 }}>{label}</span>
               </button>
             );
@@ -283,7 +282,7 @@ export default function LeftPanel({
           <div style={{ width: 22, height: 22, borderRadius: 3, background: penColorHex, border: '1px solid var(--border)', flexShrink: 0 }} />
           <input type="color" value={penColorHex} onChange={e => onPenColorChange(e.target.value)}
             style={{ width: 30, height: 22, padding: 0, border: 0, background: 'transparent', cursor: 'pointer', outline: 'none' }} title="Pick pen color" />
-          <span style={{ fontSize: 12, color: '#8a8078', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{penColorHex}</span>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{penColorHex}</span>
         </div>
       </Sec>
 
@@ -296,7 +295,7 @@ export default function LeftPanel({
             <Lbl text="Color" />
             <input type="color" value={highlightColor} onChange={e => onHighlightColorChange(e.target.value)}
               style={{ width: 30, height: 22, padding: 0, border: 0, background: 'transparent', cursor: 'pointer', outline: 'none' }} />
-            <span style={{ fontSize: 12, color: '#8a8078', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{highlightColor}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{highlightColor}</span>
           </Row>
         </div>
       </div>

@@ -132,12 +132,14 @@ function registerProtocol() {
 }
 
 function createWindow() {
+  const iconPath = path.join(app.getAppPath(), 'out', 'app-logo.png');
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 800,
     minHeight: 600,
     backgroundColor: '#f0ede8',
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
     webPreferences: {
       // Use app.getAppPath() so the preload resolves correctly in production asar
       preload: path.join(app.getAppPath(), 'electron', 'preload.js'),

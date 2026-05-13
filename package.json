@@ -17,6 +17,7 @@
   "build": {
     "appId": "com.motifanalyzer.app",
     "productName": "Motif Analyzer",
+    "icon": "public/app-logo.png",
     "directories": {
       "output": "release"
     },

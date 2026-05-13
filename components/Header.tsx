@@ -88,18 +88,19 @@ export default function Header({
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, height: 38,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6,
       padding: '0 10px',
-      background: '#ffffff',
-      borderBottom: '1px solid #d8d2c8',
+      background: 'var(--card)',
+      borderBottom: '1px solid var(--border)',
       boxShadow: '0 1px 4px rgba(0,0,0,.07)',
     }}>
 
       {/* ── Logo ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
-        <span style={{ fontSize: 16, color: '#7a6a55', lineHeight: 1 }}>◈</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        <img src="/app-logo.png" alt="Logo"
+          style={{ width: 26, height: 26, objectFit: 'contain', display: 'block', flexShrink: 0 }} />
         <span style={{
           fontFamily: "'JetBrains Mono', 'Consolas', monospace",
           fontWeight: 700, fontSize: 11,
-          letterSpacing: '2px', color: '#3a3530',
+          letterSpacing: '2px', color: 'var(--foreground)',
         }}>
           Motif Analyzer
         </span>
@@ -109,7 +110,7 @@ export default function Header({
       <div style={{ flex: 1, overflow: 'hidden', padding: '0 12px' }}>
         <div style={{
           fontFamily: "'JetBrains Mono', 'Consolas', monospace",
-          fontSize: 9, color: '#a09080',
+          fontSize: 9, color: 'var(--text-secondary)',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           ...(statusType !== 'idle' && statusType !== undefined
             ? { color: statusColor }
@@ -141,24 +142,24 @@ export default function Header({
           {exportOpen && (
             <div style={{
               position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 100,
-              background: '#ffffff', border: '1px solid var(--border)', borderRadius: 6,
-              boxShadow: '0 4px 16px rgba(0,0,0,.15)', minWidth: 130, overflow: 'hidden',
+              background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 6,
+              boxShadow: '0 4px 16px rgba(0,0,0,.25)', minWidth: 130, overflow: 'hidden',
             }}>
               {(['bmp','png','tiff'] as const).map(fmt => (
                 <button key={fmt} onClick={() => { onExport(fmt); setExportOpen(false); }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 9, width: '100%',
                     padding: '8px 14px', background: 'transparent', border: 'none',
-                    color: '#2c2a26', cursor: 'pointer',
+                    color: 'var(--foreground)', cursor: 'pointer',
                     fontFamily: "'JetBrains Mono', 'Consolas', monospace",
                     fontSize: 9, fontWeight: 600, letterSpacing: '0.06em', textAlign: 'left',
                     transition: 'background .1s',
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#f5f2ee')}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--panel)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <span style={{ fontSize: 9, color: '#8a8078', fontWeight: 700, letterSpacing: '0.1em',
-                    background: '#eceae6', border: '1px solid #d4cfc8', borderRadius: 3, padding: '1px 5px' }}>
+                  <span style={{ fontSize: 9, color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.1em',
+                    background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 3, padding: '1px 5px' }}>
                     {fmt.toUpperCase()}
                   </span>
                   {fmt === 'bmp' ? '8-bit BMP' : fmt === 'png' ? 'PNG Image' : 'TIFF Image'}

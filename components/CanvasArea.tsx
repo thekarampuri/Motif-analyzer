@@ -31,13 +31,13 @@ const OVERLAY_CURSOR: Record<Tool,string> = { move:'default',  erase:'crosshair'
 
 /* zoom button shared style */
 const zbtn: React.CSSProperties = {
-  background: '#ffffff',
-  border: '1px solid #c8bfb0',
+  background: 'var(--card)',
+  border: '1px solid var(--border)',
   borderRadius: 4,
   padding: '4px 10px',
   fontFamily: "'JetBrains Mono', 'Consolas', monospace",
   fontSize: 11, fontWeight: 700,
-  color: '#4a4038',
+  color: 'var(--foreground)',
   cursor: 'pointer',
   lineHeight: 1,
   whiteSpace: 'nowrap',
@@ -83,7 +83,7 @@ export default function CanvasArea({
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden',
-      background: '#e8e4de' }}>
+      background: 'var(--canvas-bg)' }}>
 
       {/* ── Viewport ── */}
       <div
@@ -120,7 +120,7 @@ export default function CanvasArea({
             gap: 12, pointerEvents: 'none',
           }}>
             <div style={{ fontSize: 48, opacity: 0.25, color: 'inherit', lineHeight: 1 }}>◈</div>
-            <div style={{ fontFamily: "'JetBrains Mono', 'Consolas', monospace", fontSize: 12, color: '#b0a898' }}>
+            <div style={{ fontFamily: "'JetBrains Mono', 'Consolas', monospace", fontSize: 12, color: 'var(--text-tertiary)' }}>
               Upload an image to begin
             </div>
           </div>
@@ -134,12 +134,12 @@ export default function CanvasArea({
       <div style={{
         position: 'absolute', bottom: 10, right: 12, zIndex: 10,
         padding: '3px 8px',
-        background: 'rgba(255,255,255,.75)',
-        border: '1px solid #ddd8d0',
+        background: 'var(--overlay-bg)',
+        border: '1px solid var(--panel-border)',
         borderRadius: 3,
         fontFamily: "'JetBrains Mono', 'Consolas', monospace",
         fontSize: 10, fontWeight: 500,
-        color: '#4a4038', pointerEvents: 'none',
+        color: 'var(--foreground)', pointerEvents: 'none',
       }}>
         {coordX} , {coordY} &nbsp;·&nbsp; {zoom}×
       </div>
