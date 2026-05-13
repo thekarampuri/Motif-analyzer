@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Motif Analyzer — Admin Dashboard</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #0d0f17;
+  --surface:    #13161f;
+  --surface2:   #1a1e2c;
+  --surface3:   #212638;
+  --border:     #252c40;
+  --border2:    #2f3854;
+  --accent:     #7c6cf8;
+  --accent-glow:rgba(124,108,248,.18);
+  --teal:       #00c9a7;
+  --teal-glow:  rgba(0,201,167,.13);
+  --success:    #10b981;
+  --error:      #ef4444;
+  --warning:    #f59e0b;
+  --text:       #dde2f0;
+  --text2:      #7a85a0;
+  --text3:      #3d4560;
+  --font:       -apple-system,'Segoe UI',system-ui,sans-serif;
+  --mono:       'JetBrains Mono','Consolas',monospace;
+  --radius:     8px;
+}
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3d4868; }
+
+/* ── Banner (key missing warning) ── */
+#key-warning {
+  display: none;
+  background: rgba(239,68,68,.12);
+  border-bottom: 1px solid rgba(239,68,68,.3);
+  color: #fca5a5;
+  font-size: 12px;
+  padding: 8px 20px;
+  text-align: center;
+}
+
+/* ── Header ── */
+.hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 54px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+}
+.hdr * { -webkit-app-region: no-drag; }
+.hdr-left  { display: flex; align-items: center; gap: 10px; }
+.hdr-logo  { width: 32px; height: 32px; object-fit: contain; }
+.hdr-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  color: var(--text);
+}
+.badge-admin {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-glow);
+  border: 1px solid rgba(124,108,248,.35);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+.hdr-right { display: flex; align-items: center; gap: 8px; }
+.hdr-storage {
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--text3);
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Stats ── */
+.stats {
+  display: flex;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.stat-card {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 18px;
+}
+.stat-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text2);
+  margin-bottom: 4px;
+}
+.stat-val {
+  font-size: 26px;
+  font-weight: 800;
+  font-family: var(--mono);
+  color: var(--text);
+  line-height: 1;
+}
+.stat-card.s-accent .stat-val { color: var(--accent); }
+.stat-card.s-teal   .stat-val { color: var(--teal); }
+.stat-card.s-warn   .stat-val { color: var(--warning); }
+
+/* ── Toolbar ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.search {
+  flex: 1;
+  max-width: 380px;
+  height: 34px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font);
+  padding: 0 12px 0 34px;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%233d4560' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  transition: border-color .15s;
+}
+.search:focus { border-color: var(--accent); }
+.search::placeholder { color: var(--text3); }
+.spacer { flex: 1; }
+.record-count {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text3);
+  white-space: nowrap;
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 16px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .15s;
+  white-space: nowrap;
+  font-family: var(--font);
+  outline: none;
+}
+.btn:active { transform: scale(.97); }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.btn-primary:hover { background: #6a5ae0; }
+
+.btn-ghost {
+  background: var(--surface2);
+  color: var(--text);
+  border-color: var(--border2);
+}
+.btn-ghost:hover { background: var(--surface3); border-color: var(--accent); color: var(--accent); }
+
+.btn-xs {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 11px;
+  border-radius: 6px;
+}
+
+.btn-copy-key {
+  background: var(--teal-glow);
+  color: var(--teal);
+  border-color: rgba(0,201,167,.3);
+}
+.btn-copy-key:hover { background: rgba(0,201,167,.22); }
+
+.btn-view {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: rgba(124,108,248,.3);
+}
+.btn-view:hover { background: rgba(124,108,248,.25); }
+
+.btn-del {
+  background: transparent;
+  color: var(--error);
+  border-color: rgba(239,68,68,.25);
+}
+.btn-del:hover { background: rgba(239,68,68,.12); }
+
+/* ── Table ── */
+.tbl-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 24px;
+}
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface2);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border2);
+  white-space: nowrap;
+}
+thead th:first-child { border-radius: 8px 0 0 0; }
+thead th:last-child  { border-radius: 0 8px 0 0; }
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background .1s;
+}
+tbody tr:hover { background: var(--surface2); }
+td {
+  padding: 11px 14px;
+  font-size: 12px;
+  color: var(--text);
+  vertical-align: middle;
+}
+.c-num  { color: var(--text3); font-family: var(--mono); font-size: 11px; width: 36px; }
+.c-name { font-weight: 600; }
+.c-biz  { color: var(--text2); }
+.c-mid  {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text2);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.c-date {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  white-space: nowrap;
+}
+.c-actions { display: flex; gap: 6px; align-items: center; }
+
+/* ── Empty state ── */
+.empty {
+  text-align: center;
+  padding: 70px 20px;
+  color: var(--text3);
+}
+.empty-icon { font-size: 52px; margin-bottom: 14px; opacity: .35; }
+.empty-title { font-size: 15px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+.empty-sub   { font-size: 12px; }
+
+/* ── Modal overlay ── */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+.overlay.open { display: flex; }
+
+/* ── Modal card ── */
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  width: 520px;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 32px 80px rgba(0,0,0,.7);
+  animation: popIn .18s ease;
+}
+@keyframes popIn {
+  from { transform: translateY(-18px) scale(.97); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+.modal-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-hdr-title { font-size: 15px; font-weight: 700; }
+.modal-close {
+  width: 28px; height: 28px;
+  border: none;
+  background: var(--surface2);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text2);
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .1s;
+}
+.modal-close:hover { background: var(--surface3); color: var(--text); }
+.modal-body { padding: 20px; }
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Form fields ── */
+.field { margin-bottom: 15px; }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--text2);
+  margin-bottom: 6px;
+}
+.field label .req { color: var(--accent); margin-left: 2px; }
+.field input, .field textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--font);
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color .15s;
+}
+.field input:focus, .field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.field input::placeholder, .field textarea::placeholder { color: var(--text3); }
+.field textarea { resize: vertical; min-height: 64px; font-size: 12px; line-height: 1.5; }
+.field-hint { font-size: 10px; color: var(--text3); margin-top: 5px; }
+.mid-field input { font-family: var(--mono) !important; font-size: 12px !important; letter-spacing: .5px; }
+.field-row { display: flex; gap: 12px; }
+.field-row .field { flex: 1; }
+
+/* ── Key result ── */
+.key-result {
+  margin-top: 18px;
+  background: var(--surface2);
+  border: 1px solid rgba(0,201,167,.3);
+  border-radius: var(--radius);
+  padding: 16px;
+  animation: popIn .2s ease;
+}
+.key-result-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--teal);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.key-result-lbl::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: var(--teal);
+  border-radius: 50%;
+}
+.key-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.key-text {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text);
+  word-break: break-all;
+  line-height: 1.7;
+}
+
+/* ── Detail modal ── */
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--text2);
+}
+.detail-val {
+  font-size: 13px;
+  color: var(--text);
+  word-break: break-all;
+}
+.detail-val.mono { font-family: var(--mono); font-size: 11px; line-height: 1.6; }
+.detail-val.muted { color: var(--text2); }
+.detail-copy-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* ── Confirm dialog ── */
+.confirm-box {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 28px 24px;
+  width: 360px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  animation: popIn .18s ease;
+}
+.confirm-icon { font-size: 40px; margin-bottom: 12px; }
+.confirm-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.confirm-msg { font-size: 13px; color: var(--text2); margin-bottom: 22px; line-height: 1.5; }
+.confirm-actions { display: flex; gap: 10px; justify-content: center; }
+
+/* ── Toast ── */
+#toast {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--text);
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .25s, transform .25s;
+  pointer-events: none;
+  min-width: 220px;
+}
+#toast.show { opacity: 1; transform: none; }
+.toast-icon-ok  { color: var(--success); font-size: 15px; }
+.toast-icon-err { color: var(--error); font-size: 15px; }
+</style>
+</head>
+<body>
+
+<!-- Key missing warning -->
+<div id="key-warning">
+  ⚠ Private key not found — license generation is unavailable. Expected at: <span id="key-path-hint"></span>
+</div>
+
+<!-- Header -->
+<div class="hdr">
+  <div class="hdr-left">
+    <img class="hdr-logo" src="app-logo.png" alt="" onerror="this.style.display='none'">
+    <span class="hdr-title">Motif Analyzer</span>
+    <span class="badge-admin">Admin</span>
+  </div>
+  <div class="hdr-right">
+    <span class="hdr-storage" id="storage-path" title=""></span>
+    <button class="btn btn-ghost" style="height:30px;padding:0 12px;font-size:11px" onclick="exportCSV()">
+      ↓ Export CSV
+    </button>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat-card s-accent">
+    <div class="stat-lbl">Total Licenses</div>
+    <div class="stat-val" id="s-total">0</div>
+  </div>
+  <div class="stat-card s-teal">
+    <div class="stat-lbl">This Month</div>
+    <div class="stat-val" id="s-month">0</div>
+  </div>
+  <div class="stat-card s-warn">
+    <div class="stat-lbl">Today</div>
+    <div class="stat-val" id="s-today">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-lbl">Last Generated</div>
+    <div class="stat-val" id="s-last" style="font-size:13px;padding-top:6px;color:var(--text2)">—</div>
+  </div>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <button class="btn btn-primary" id="add-btn" onclick="openAdd()">
+    + &nbsp;Add License
+  </button>
+  <input class="search" id="search" type="text"
+    placeholder="Search by name, business, machine ID or email…"
+    oninput="renderTable()" />
+  <div class="spacer"></div>
+  <span class="record-count" id="record-count"></span>
+</div>
+
+<!-- Table -->
+<div class="tbl-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Customer Name</th>
+        <th>Business</th>
+        <th>Email</th>
+        <th>Machine ID</th>
+        <th>Generated</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<!-- ════ ADD MODAL ════ -->
+<div class="overlay" id="add-overlay">
+  <div class="modal" id="add-modal">
+    <div class="modal-hdr">
+      <div class="modal-hdr-title">Generate License Key</div>
+      <button class="modal-close" onclick="closeAdd()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field">
+          <label>Customer Name <span class="req">*</span></label>
+          <input id="f-name" type="text" placeholder="e.g. John Smith" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Business / Company</label>
+          <input id="f-biz" type="text" placeholder="e.g. AcmeTextiles Ltd." autocomplete="off" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input id="f-email" type="email" placeholder="e.g. john@acmetextiles.com" autocomplete="off" />
+      </div>
+      <div class="field mid-field">
+        <label>Machine ID <span class="req">*</span></label>
+        <input id="f-mid" type="text"
+          placeholder="e.g. A1B2C3D4-E5F6A7B8-C9D0E1F2-A3B4C5D6-E7F8A9B0-C1D2E3F4-A5B6C7D8-E9F0A1B2"
+          autocomplete="off" autocorrect="off" spellcheck="false" />
+        <div class="field-hint">Copy from the customer's Motif Analyzer activation screen</div>
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea id="f-notes" placeholder="Optional notes about this customer or license…"></textarea>
+      </div>
+
+      <!-- Key result (hidden until generated) -->
+      <div class="key-result" id="key-result" style="display:none">
+        <div class="key-result-lbl">License Key Generated</div>
+        <div class="key-wrap">
+          <div class="key-text" id="key-display"></div>
+          <button class="btn btn-xs btn-copy-key" onclick="copyGenKey()">Copy</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAdd()">Cancel</button>
+      <button class="btn btn-primary" id="gen-btn" onclick="generateKey()">Generate Key</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ DETAIL MODAL ════ -->
+<div class="overlay" id="detail-overlay">
+  <div class="modal" style="width:500px">
+    <div class="modal-hdr">
+      <div class="modal-hdr-title">License Details</div>
+      <button class="modal-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body" id="detail-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeDetail()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ CONFIRM DELETE ════ -->
+<div class="overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">Delete License?</div>
+    <div class="confirm-msg" id="confirm-msg">This cannot be undone.</div>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-primary"
+        style="background:var(--error);border-color:var(--error)"
+        onclick="doDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast">
+  <span id="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+'use strict';
+
+let licenses     = [];
+let deleteId     = null;
+let genKey       = null;   // last generated key string
+let keyAvailable = true;
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const info = await window.adminAPI.checkReady();
+  keyAvailable = info.keyExists;
+
+  if (!keyAvailable) {
+    document.getElementById('key-warning').style.display = 'block';
+    document.getElementById('key-path-hint').textContent  = info.storagePath.replace('licenses.json', '') + '..\\tools\\private.key';
+    document.getElementById('add-btn').disabled = true;
+    document.getElementById('add-btn').style.opacity = '.45';
+    document.getElementById('add-btn').title = 'Private key not found';
+  }
+
+  const el = document.getElementById('storage-path');
+  el.textContent = '📂 ' + info.storagePath;
+  el.title       = info.storagePath;
+
+  licenses = await window.adminAPI.getLicenses();
+  renderTable();
+  updateStats();
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function updateStats() {
+  const now   = new Date();
+  const month = now.toISOString().slice(0, 7);
+  const today = now.toISOString().slice(0, 10);
+
+  document.getElementById('s-total').textContent = licenses.length;
+  document.getElementById('s-month').textContent = licenses.filter(l => l.createdAt.startsWith(month)).length;
+  document.getElementById('s-today').textContent = licenses.filter(l => l.createdAt.startsWith(today)).length;
+
+  const last = licenses[0];
+  document.getElementById('s-last').textContent = last
+    ? new Date(last.createdAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
+    : '—';
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+function renderTable() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const filtered = q
+    ? licenses.filter(l =>
+        l.name     .toLowerCase().includes(q) ||
+        (l.business||'').toLowerCase().includes(q) ||
+        (l.email   ||'').toLowerCase().includes(q) ||
+        (l.machineId||'').toLowerCase().includes(q))
+    : licenses;
+
+  document.getElementById('record-count').textContent =
+    filtered.length + ' of ' + licenses.length + ' records';
+
+  const tbody = document.getElementById('tbody');
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7">
+      <div class="empty">
+        <div class="empty-icon">🔑</div>
+        <div class="empty-title">${q ? 'No matching records' : 'No licenses yet'}</div>
+        <div class="empty-sub">${q ? 'Try a different search term' : 'Click "+ Add License" to generate the first license key'}</div>
+      </div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((l, i) => `
+    <tr>
+      <td class="c-num">${i + 1}</td>
+      <td class="c-name">${esc(l.name)}</td>
+      <td class="c-biz">${esc(l.business || '—')}</td>
+      <td class="c-biz">${esc(l.email    || '—')}</td>
+      <td class="c-mid" title="${esc(l.machineId)}">${esc(l.machineId)}</td>
+      <td class="c-date">${fmtDate(l.createdAt)}</td>
+      <td>
+        <div class="c-actions">
+          <button class="btn btn-xs btn-copy-key" onclick="copyKey(${JSON.stringify(l.id)})">Copy Key</button>
+          <button class="btn btn-xs btn-view"     onclick="openDetail(${JSON.stringify(l.id)})">View</button>
+          <button class="btn btn-xs btn-del"      onclick="askDelete(${JSON.stringify(l.id)}, ${JSON.stringify(l.name)})">Delete</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
+    + '  '
+    + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+}
+
+// ── Copy key ──────────────────────────────────────────────────────────────────
+function copyKey(id) {
+  const l = licenses.find(x => x.id === id);
+  if (!l) return;
+  window.adminAPI.copyText(l.licenseKey);
+  toast('License key copied to clipboard', 'ok');
+}
+
+// ── Detail modal ──────────────────────────────────────────────────────────────
+function openDetail(id) {
+  const l = licenses.find(x => x.id === id);
+  if (!l) return;
+
+  const rows = [
+    ['Customer Name', esc(l.name),       false],
+    ['Business',      esc(l.business||'—'), false],
+    ['Email',         esc(l.email   ||'—'), false],
+    ['Machine ID',    esc(l.machineId),  true ],
+    ['Generated At',  esc(fmtDate(l.createdAt)), false],
+    ['Notes',         esc(l.notes   ||'—'), false],
+  ];
+
+  const rowsHtml = rows.map(([label, val, mono]) => `
+    <div class="detail-row">
+      <div class="detail-lbl">${label}</div>
+      <div class="detail-val${mono?' mono':''}">${val}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('detail-body').innerHTML = `
+    ${rowsHtml}
+    <div class="detail-row">
+      <div class="detail-lbl">License Key</div>
+      <div class="detail-copy-row">
+        <div class="detail-val mono" style="flex:1">${esc(l.licenseKey)}</div>
+        <button class="btn btn-xs btn-copy-key" style="flex-shrink:0;margin-top:2px"
+          onclick="copyKey(${JSON.stringify(l.id)});closeDetail()">Copy Key</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detail-overlay').classList.remove('open');
+}
+
+// ── Add modal ─────────────────────────────────────────────────────────────────
+function openAdd() {
+  if (!keyAvailable) return;
+  ['f-name','f-biz','f-email','f-mid','f-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('key-result').style.display = 'none';
+  document.getElementById('gen-btn').textContent = 'Generate Key';
+  document.getElementById('gen-btn').disabled = false;
+  document.getElementById('gen-btn').onclick = generateKey;
+  genKey = null;
+  document.getElementById('add-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('f-name').focus(), 80);
+}
+
+function closeAdd() {
+  document.getElementById('add-overlay').classList.remove('open');
+  genKey = null;
+}
+
+async function generateKey() {
+  const name      = document.getElementById('f-name').value.trim();
+  const business  = document.getElementById('f-biz').value.trim();
+  const email     = document.getElementById('f-email').value.trim();
+  const machineId = document.getElementById('f-mid').value.trim();
+  const notes     = document.getElementById('f-notes').value.trim();
+
+  if (!name)      { shakeField('f-name'); toast('Customer name is required', 'err'); return; }
+  if (!machineId) { shakeField('f-mid');  toast('Machine ID is required', 'err');    return; }
+
+  const btn = document.getElementById('gen-btn');
+  btn.textContent = 'Generating…';
+  btn.disabled    = true;
+
+  try {
+    const record = await window.adminAPI.generateLicense({ name, business, email, machineId, notes });
+    licenses.unshift(record);
+    genKey = record.licenseKey;
+
+    document.getElementById('key-display').textContent = record.licenseKey;
+    document.getElementById('key-result').style.display = 'block';
+    btn.textContent = '✓  Done — Close';
+    btn.disabled    = false;
+    btn.onclick     = () => { closeAdd(); renderTable(); updateStats(); };
+
+    toast('License key generated and saved', 'ok');
+  } catch (err) {
+    btn.textContent = 'Generate Key';
+    btn.disabled    = false;
+    toast('Error: ' + err.message, 'err');
+    console.error(err);
+  }
+}
+
+function copyGenKey() {
+  if (!genKey) return;
+  window.adminAPI.copyText(genKey);
+  toast('Copied!', 'ok');
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+function askDelete(id, name) {
+  deleteId = id;
+  document.getElementById('confirm-msg').textContent =
+    `Delete the license for "${name}"? This cannot be undone.`;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  deleteId = null;
+}
+
+async function doDelete() {
+  if (!deleteId) return;
+  await window.adminAPI.deleteLicense(deleteId);
+  licenses = licenses.filter(l => l.id !== deleteId);
+  closeConfirm();
+  renderTable();
+  updateStats();
+  toast('License deleted', 'ok');
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+async function exportCSV() {
+  if (!licenses.length) { toast('No licenses to export', 'err'); return; }
+  const result = await window.adminAPI.exportCSV();
+  if (result && result.success) toast('Exported → ' + result.path, 'ok');
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let _toastTimer = null;
+function toast(msg, type='ok') {
+  const el   = document.getElementById('toast');
+  const icon = document.getElementById('toast-icon');
+  document.getElementById('toast-msg').textContent = msg;
+  icon.className   = type === 'ok' ? 'toast-icon-ok' : 'toast-icon-err';
+  icon.textContent = type === 'ok' ? '✓' : '✕';
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── Shake field ───────────────────────────────────────────────────────────────
+function shakeField(id) {
+  const el = document.getElementById(id);
+  el.style.borderColor = 'var(--error)';
+  el.style.boxShadow   = '0 0 0 3px rgba(239,68,68,.2)';
+  el.animate([
+    {transform:'translateX(0)'},
+    {transform:'translateX(-5px)'},
+    {transform:'translateX(5px)'},
+    {transform:'translateX(-3px)'},
+    {transform:'translateX(0)'},
+  ], { duration: 280 });
+  setTimeout(() => { el.style.borderColor=''; el.style.boxShadow=''; }, 1200);
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('confirm-overlay').classList.contains('open')) { closeConfirm(); return; }
+    if (document.getElementById('detail-overlay').classList.contains('open'))  { closeDetail();  return; }
+    if (document.getElementById('add-overlay').classList.contains('open'))     { closeAdd();     return; }
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'n' && keyAvailable) { e.preventDefault(); openAdd(); }
+});
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
