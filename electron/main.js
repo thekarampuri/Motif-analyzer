@@ -211,10 +211,11 @@ ipcMain.handle('save-bmp', async (_event, { fileName, buffer }) => {
 });
 
 // ── IPC: native save dialog ──
-ipcMain.handle('show-save-dialog', async (_event, { defaultName }) => {
+ipcMain.handle('show-save-dialog', async (_event, { defaultName, defaultDir }) => {
   const { dialog } = require('electron');
+  const dir = defaultDir || path.join(require('os').homedir(), 'Downloads');
   return dialog.showSaveDialog(mainWindow, {
-    defaultPath: path.join(require('os').homedir(), 'Downloads', defaultName || 'motif_export.bmp'),
+    defaultPath: path.join(dir, defaultName || 'motif_export.bmp'),
     filters: [{ name: 'BMP Image', extensions: ['bmp'] }],
   });
 });
@@ -233,15 +234,16 @@ ipcMain.handle('save-file', async (_event, { fileName, buffer }) => {
 });
 
 // ── IPC: save dialog with format ──
-ipcMain.handle('show-save-dialog-format', async (_event, { defaultName, format }) => {
+ipcMain.handle('show-save-dialog-format', async (_event, { defaultName, format, defaultDir }) => {
   const { dialog } = require('electron');
   const filters = {
     png:  [{ name: 'PNG Image',           extensions: ['png']        }],
     tiff: [{ name: 'TIFF Image',          extensions: ['tiff', 'tif']}],
     maf:  [{ name: 'Motif Analyzer File', extensions: ['maf']        }],
   };
+  const dir = defaultDir || path.join(require('os').homedir(), 'Downloads');
   return dialog.showSaveDialog(mainWindow, {
-    defaultPath: path.join(require('os').homedir(), 'Downloads', defaultName),
+    defaultPath: path.join(dir, defaultName),
     filters: filters[format] || filters.png,
   });
 });

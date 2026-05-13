@@ -59,8 +59,8 @@ export interface ElectronAPI {
   onBitmapsUpdated: (cb: (data: { motif: BitmapItem[]; fill: BitmapItem[] }) => void) => () => void;
   saveBmp: (fileName: string, buffer: ArrayBuffer) => Promise<{ success: boolean; path?: string; error?: string }>;
   saveFile: (fileName: string, buffer: ArrayBuffer) => Promise<{ success: boolean; path?: string; error?: string }>;
-  showSaveDialog: (defaultName: string) => Promise<{ canceled: boolean; filePath?: string }>;
-  showSaveDialogFormat: (defaultName: string, format: 'png' | 'tiff' | 'maf') => Promise<{ canceled: boolean; filePath?: string }>;
+  showSaveDialog: (defaultName: string, defaultDir?: string) => Promise<{ canceled: boolean; filePath?: string }>;
+  showSaveDialogFormat: (defaultName: string, format: 'png' | 'tiff' | 'maf', defaultDir?: string) => Promise<{ canceled: boolean; filePath?: string }>;
   showOpenProjectDialog: () => Promise<{ canceled: boolean; filePath?: string }>;
   saveProject: (filePath: string, data: string) => Promise<{ success: boolean; error?: string }>;
   loadProject: (filePath: string) => Promise<{ success: boolean; data?: string; error?: string }>;

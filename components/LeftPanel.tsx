@@ -55,10 +55,10 @@ function ThumbSelect({ label, items, selectedIdx, onSelect }:{
           : <div style={{ width: 22, height: 22, borderRadius: 2, border: '1px solid var(--border)', background: 'var(--background)', flexShrink: 0,
               backgroundImage: 'repeating-linear-gradient(45deg,var(--border) 0,var(--border) 1px,transparent 0,transparent 50%)', backgroundSize: '4px 4px' }} />
         }
-        <span style={{ flex: 1, textAlign: 'left', fontSize: 9, fontFamily: "'Inter', 'Segoe UI', sans-serif", color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ flex: 1, textAlign: 'left', fontSize: 12, fontFamily: "'Inter', 'Segoe UI', sans-serif", color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {sel ? sel.name : label}
         </span>
-        <span style={{ fontSize: 9, color: 'var(--text-secondary)' }}>▼</span>
+        <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>▼</span>
       </button>
 
       {open && (
@@ -71,7 +71,7 @@ function ThumbSelect({ label, items, selectedIdx, onSelect }:{
           }}>
             <div onClick={() => { onSelect(-1); setOpen(false); }}
               style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', cursor: 'pointer',
-                fontSize: 9, fontFamily: "'Inter', 'Segoe UI', sans-serif", color: 'var(--text-secondary)', fontStyle: 'italic' }}
+                fontSize: 12, fontFamily: "'Inter', 'Segoe UI', sans-serif", color: 'var(--text-secondary)', fontStyle: 'italic' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--panel)')}
               onMouseLeave={e => (e.currentTarget.style.background = '')}
             >— None —</div>
@@ -79,7 +79,7 @@ function ThumbSelect({ label, items, selectedIdx, onSelect }:{
               <div key={idx} onClick={() => { onSelect(idx); setOpen(false); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px', cursor: 'pointer',
-                  fontSize: 9, fontFamily: "'Inter', 'Segoe UI', sans-serif",
+                  fontSize: 12, fontFamily: "'Inter', 'Segoe UI', sans-serif",
                   background: idx === selectedIdx ? 'var(--panel)' : undefined,
                 }}
                 onMouseEnter={e => { if(idx !== selectedIdx) e.currentTarget.style.background = 'var(--panel)'; }}
@@ -90,7 +90,7 @@ function ThumbSelect({ label, items, selectedIdx, onSelect }:{
               </div>
             ))}
             {items.length === 0 && (
-              <div style={{ padding: '10px 12px', fontSize: 9, color: 'var(--text-secondary)' }}>No bitmaps in folder</div>
+              <div style={{ padding: '10px 12px', fontSize: 12, color: 'var(--text-secondary)' }}>No bitmaps in folder</div>
             )}
           </div>
         </>
@@ -117,7 +117,7 @@ export default function LeftPanel({
     <input type="number" value={v} min={min} max={max}
       onChange={e => cb(Math.max(min, Math.min(max, +e.target.value)))}
       style={{
-        width: 38, height: 22, fontSize: 9.5,
+        width: 46, height: 24, fontSize: 12,
         fontFamily: "'JetBrains Mono', 'Consolas', monospace",
         textAlign: 'center', background: 'var(--input-bg)',
         border: '1px solid var(--border)', borderRadius: 3,
@@ -128,7 +128,7 @@ export default function LeftPanel({
 
   const Chk = ({ checked, onChange, label }:{checked:boolean; onChange:(v:boolean)=>void; label:string}) => (
     <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer',
-      fontSize: 9, fontWeight: 600, color: 'var(--foreground)',
+      fontSize: 12, fontWeight: 600, color: 'var(--foreground)',
       fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
       <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)}
         style={{ width: 12, height: 12, accentColor: '#7a6a55', cursor: 'pointer', flexShrink: 0 }} />
@@ -140,7 +140,7 @@ export default function LeftPanel({
   const SecTitle = ({ text }: { text: string }) => (
     <div style={{
       fontFamily: "'JetBrains Mono', 'Consolas', monospace",
-      fontSize: 7, fontWeight: 700, letterSpacing: '1.5px',
+      fontSize: 10, fontWeight: 700, letterSpacing: '1.5px',
       color: '#bbb0a0', textTransform: 'uppercase',
       marginBottom: 5, paddingTop: 2,
     }}>
@@ -151,7 +151,7 @@ export default function LeftPanel({
   /* flabel style */
   const Lbl = ({ text }: { text: string }) => (
     <span style={{
-      fontSize: 9, fontWeight: 600, color: '#8a8078',
+      fontSize: 12, fontWeight: 600, color: '#8a8078',
       fontFamily: "'Inter', 'Segoe UI', sans-serif", whiteSpace: 'nowrap',
     }}>{text}</span>
   );
@@ -186,7 +186,7 @@ export default function LeftPanel({
             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 4,
             cursor: 'pointer', fontFamily: "'JetBrains Mono', 'Consolas', monospace",
-            fontWeight: 600, fontSize: 9.5, letterSpacing: '0.04em',
+            fontWeight: 600, fontSize: 12, letterSpacing: '0.04em',
             color: '#3a3530', height: 26, transition: 'opacity .12s',
           }}
           onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
@@ -220,7 +220,7 @@ export default function LeftPanel({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <select value={fillMode} onChange={e => onFillModeChange(e.target.value as FillMode)}
             style={{
-              width: '100%', height: 22, fontSize: 9.5, padding: '0 6px', borderRadius: 3,
+              width: '100%', height: 26, fontSize: 12, padding: '0 6px', borderRadius: 3,
               background: 'var(--input-bg)', border: '1px solid var(--border)',
               color: 'var(--foreground)', outline: 'none', cursor: 'pointer',
               fontFamily: "'JetBrains Mono', 'Consolas', monospace",
@@ -238,7 +238,7 @@ export default function LeftPanel({
           <Div />
           <Row between><Chk checked={vertFloat} onChange={onVertFloatChange} label="Float Fill" />{Num(vertFloatLen, onVertFloatLenChange, 1, 9999)}</Row>
           {floatCountText && (
-            <div style={{ fontSize: 9, color: '#8a8078', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{floatCountText}</div>
+            <div style={{ fontSize: 11, color: '#8a8078', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{floatCountText}</div>
           )}
         </div>
       </Sec>
@@ -266,7 +266,7 @@ export default function LeftPanel({
                   {icon}
                 </span>
                 <span style={{
-                  fontSize: 7, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+                  fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
                   fontFamily: "'JetBrains Mono', 'Consolas', monospace",
                   color: active ? '#ffffff' : '#8a8078',
                 }}>{label}</span>
@@ -283,7 +283,7 @@ export default function LeftPanel({
           <div style={{ width: 22, height: 22, borderRadius: 3, background: penColorHex, border: '1px solid var(--border)', flexShrink: 0 }} />
           <input type="color" value={penColorHex} onChange={e => onPenColorChange(e.target.value)}
             style={{ width: 30, height: 22, padding: 0, border: 0, background: 'transparent', cursor: 'pointer', outline: 'none' }} title="Pick pen color" />
-          <span style={{ fontSize: 9, color: '#8a8078', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{penColorHex}</span>
+          <span style={{ fontSize: 12, color: '#8a8078', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{penColorHex}</span>
         </div>
       </Sec>
 
@@ -296,7 +296,7 @@ export default function LeftPanel({
             <Lbl text="Color" />
             <input type="color" value={highlightColor} onChange={e => onHighlightColorChange(e.target.value)}
               style={{ width: 30, height: 22, padding: 0, border: 0, background: 'transparent', cursor: 'pointer', outline: 'none' }} />
-            <span style={{ fontSize: 9, color: '#8a8078', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{highlightColor}</span>
+            <span style={{ fontSize: 12, color: '#8a8078', fontFamily: "'JetBrains Mono', 'Consolas', monospace" }}>{highlightColor}</span>
           </Row>
         </div>
       </div>
@@ -312,7 +312,7 @@ export default function LeftPanel({
             src="/logo.png"
             alt="Business Logo"
             onError={() => setLogoMissing(true)}
-            style={{ maxWidth: '100%', maxHeight: 60, objectFit: 'contain', display: 'block' }}
+            style={{ maxWidth: '100%', maxHeight: 180, objectFit: 'contain', display: 'block' }}
           />
         </div>
       )}

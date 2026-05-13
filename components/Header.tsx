@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Undo2, Redo2, Download, Trash2, RotateCcw, Moon, Sun, Save, FolderOpen, ChevronDown } from 'lucide-react';
+import { Undo2, Redo2, Download, Trash2, RotateCcw, Moon, Sun, ChevronDown } from 'lucide-react';
 import type { StatusType } from '@/lib/types';
 
 interface HeaderProps {
@@ -121,12 +121,6 @@ export default function Header({
 
       {/* ── Action buttons ── */}
       <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexShrink: 0 }}>
-
-        {/* Project */}
-        <Btn label="Save" icon={<Save size={12}/>} onClick={onSaveProject} title="Save project (.maf)" />
-        <Btn label="Open" icon={<FolderOpen size={12}/>} onClick={onLoadProject} title="Open project (.maf)" />
-
-        <Sep />
 
         {/* History */}
         <Btn label="Undo" icon={<Undo2 size={12}/>} onClick={onUndo} disabled={!canUndo} title="Undo (Ctrl+Z)" />

@@ -100,6 +100,7 @@ export function useMotifEngine() {
   const [hasImage,       setHasImage]       = useState(false);
 
   // Keep refs for values used inside event handlers (avoid stale closures)
+  const uploadDirRef    = useRef('');
   const fillModeRef     = useRef(fillMode);
   const vBorderLenRef   = useRef(vBorderLen);
   const use8Ref         = useRef(use8);
@@ -443,6 +444,11 @@ export function useMotifEngine() {
 
   // ── Load image ──
   const handleImageFile = useCallback((file: File) => {
+    const fullPath: string = (file as any).path || '';
+    if (fullPath) {
+      const sep = fullPath.includes('\\') ? '\\' : '/';
+      uploadDirRef.current = fullPath.substring(0, fullPath.lastIndexOf(sep));
+    }
     st('Loading image…', 'busy');
     const img = new Image();
     img.onload = () => {
@@ -1058,7 +1064,7 @@ export function useMotifEngine() {
     const name = (fileName || 'motif_export') + '.bmp';
 
     if (window.electronAPI) {
-      const result = await window.electronAPI.showSaveDialog(name);
+      const result = await window.electronAPI.showSaveDialog(name, uploadDirRef.current || undefined);
       if (result.canceled || !result.filePath) { st('Export cancelled', ''); return; }
       const bmpBytes = canvasToBMP(c, canvas.width, canvas.height);
       const res = await window.electronAPI.saveBmp(result.filePath, bmpBytes.buffer);
@@ -1101,7 +1107,7 @@ export function useMotifEngine() {
       if (!blob) { st('PNG export failed', 'error'); return; }
       const buf = await blob.arrayBuffer();
       if (window.electronAPI) {
-        const result = await window.electronAPI.showSaveDialogFormat(name, 'png');
+        const result = await window.electronAPI.showSaveDialogFormat(name, 'png', uploadDirRef.current || undefined);
         if (result.canceled || !result.filePath) { st('Export cancelled', ''); return; }
         const res = await window.electronAPI.saveFile(result.filePath, buf);
         if (res.success) st(`Saved: ${result.filePath}`, 'ok');
@@ -1125,7 +1131,7 @@ export function useMotifEngine() {
     st('Building TIFF…', 'busy');
     const tiffBytes = canvasToTIFF(c, canvas.width, canvas.height);
     if (window.electronAPI) {
-      const result = await window.electronAPI.showSaveDialogFormat(name, 'tiff');
+      const result = await window.electronAPI.showSaveDialogFormat(name, 'tiff', uploadDirRef.current || undefined);
       if (result.canceled || !result.filePath) { st('Export cancelled', ''); return; }
       const res = await window.electronAPI.saveFile(result.filePath, tiffBytes.buffer);
       if (res.success) st(`Saved: ${result.filePath}`, 'ok');
