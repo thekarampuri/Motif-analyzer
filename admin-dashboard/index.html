@@ -434,34 +434,111 @@ td {
   line-height: 1.7;
 }
 
-/* ── Detail modal ── */
-.detail-row {
+/* ── Copy-feedback state (works on any .btn) ── */
+.btn[data-copied] {
+  background: rgba(16,185,129,.18) !important;
+  color: var(--success) !important;
+  border-color: rgba(16,185,129,.4) !important;
+  cursor: default !important;
+  transform: none !important;
+}
+
+/* ── Detail card ── */
+.dc-profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+.dc-avatar {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--teal) 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: .5px;
+  font-family: var(--font);
+}
+.dc-profile-right { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.dc-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dc-sub {
+  font-size: 12px;
+  color: var(--text2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dc-sep { margin: 0 5px; color: var(--text3); }
+
+.dc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.dc-cell {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
+  gap: 5px;
 }
-.detail-row:last-child { border-bottom: none; }
-.detail-lbl {
+.dc-cell.dc-full { grid-column: 1 / -1; }
+.dc-lbl {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .8px;
+  letter-spacing: 1px;
   color: var(--text2);
 }
-.detail-val {
+.dc-val {
   font-size: 13px;
   color: var(--text);
+  line-height: 1.4;
   word-break: break-all;
 }
-.detail-val.mono { font-family: var(--mono); font-size: 11px; line-height: 1.6; }
-.detail-val.muted { color: var(--text2); }
-.detail-copy-row {
+.dc-val.dc-mono { font-family: var(--mono); font-size: 11px; line-height: 1.6; color: var(--text); }
+.dc-val.dc-muted { color: var(--text2); font-style: italic; }
+
+.dc-key-section {
+  background: var(--surface2);
+  border: 1px solid rgba(0,201,167,.25);
+  border-radius: 8px;
+  padding: 14px;
+}
+.dc-key-section .dc-lbl { margin-bottom: 8px; color: var(--teal); }
+.dc-key-box {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 10px 12px;
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 10px;
+}
+.dc-key-text {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text);
+  word-break: break-all;
+  line-height: 1.8;
+  user-select: all;
 }
 
 /* ── Confirm dialog ── */
@@ -618,7 +695,7 @@ td {
         <div class="key-result-lbl">License Key Generated</div>
         <div class="key-wrap">
           <div class="key-text" id="key-display"></div>
-          <button class="btn btn-xs btn-copy-key" onclick="copyGenKey()">Copy</button>
+          <button class="btn btn-xs btn-copy-key" onclick="copyGenKey(this)">Copy</button>
         </div>
       </div>
     </div>
@@ -631,7 +708,7 @@ td {
 
 <!-- ════ DETAIL MODAL ════ -->
 <div class="overlay" id="detail-overlay">
-  <div class="modal" style="width:500px">
+  <div class="modal" style="width:540px">
     <div class="modal-hdr">
       <div class="modal-hdr-title">License Details</div>
       <button class="modal-close" onclick="closeDetail()">✕</button>
@@ -747,7 +824,7 @@ function renderTable() {
       <td class="c-date">${fmtDate(l.createdAt)}</td>
       <td>
         <div class="c-actions">
-          <button class="btn btn-xs btn-copy-key" onclick="copyKey(${JSON.stringify(l.id)})">Copy Key</button>
+          <button class="btn btn-xs btn-copy-key" onclick="copyKey(${JSON.stringify(l.id)}, this)">Copy Key</button>
           <button class="btn btn-xs btn-view"     onclick="openDetail(${JSON.stringify(l.id)})">View</button>
           <button class="btn btn-xs btn-del"      onclick="askDelete(${JSON.stringify(l.id)}, ${JSON.stringify(l.name)})">Delete</button>
         </div>
@@ -768,12 +845,26 @@ function fmtDate(iso) {
     + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
 }
 
-// ── Copy key ──────────────────────────────────────────────────────────────────
-function copyKey(id) {
+// ── Flash copied feedback on a button ────────────────────────────────────────
+function flashCopied(btn) {
+  if (btn.dataset.copied) return;
+  const prev = btn.innerHTML;
+  btn.dataset.copied = '1';
+  btn.innerHTML = '✓&nbsp;Copied!';
+  btn.disabled = true;
+  setTimeout(() => {
+    delete btn.dataset.copied;
+    btn.innerHTML = prev;
+    btn.disabled = false;
+  }, 1800);
+}
+
+// ── Copy key from table row ───────────────────────────────────────────────────
+function copyKey(id, btn) {
   const l = licenses.find(x => x.id === id);
   if (!l) return;
   window.adminAPI.copyText(l.licenseKey);
-  toast('License key copied to clipboard', 'ok');
+  if (btn) flashCopied(btn);
 }
 
 // ── Detail modal ──────────────────────────────────────────────────────────────
@@ -781,30 +872,51 @@ function openDetail(id) {
   const l = licenses.find(x => x.id === id);
   if (!l) return;
 
-  const rows = [
-    ['Customer Name', esc(l.name),       false],
-    ['Business',      esc(l.business||'—'), false],
-    ['Email',         esc(l.email   ||'—'), false],
-    ['Machine ID',    esc(l.machineId),  true ],
-    ['Generated At',  esc(fmtDate(l.createdAt)), false],
-    ['Notes',         esc(l.notes   ||'—'), false],
-  ];
+  // Build initials from name (max 2 letters)
+  const initials = l.name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(w => w[0] || '')
+    .join('')
+    .toUpperCase();
 
-  const rowsHtml = rows.map(([label, val, mono]) => `
-    <div class="detail-row">
-      <div class="detail-lbl">${label}</div>
-      <div class="detail-val${mono?' mono':''}">${val}</div>
-    </div>
-  `).join('');
+  // Build sub-line: business · email (omit blanks)
+  const subParts = [l.business, l.email].filter(Boolean);
+  const subHtml  = subParts.map(esc).join('<span class="dc-sep">·</span>') || '<em style="color:var(--text3)">—</em>';
 
   document.getElementById('detail-body').innerHTML = `
-    ${rowsHtml}
-    <div class="detail-row">
-      <div class="detail-lbl">License Key</div>
-      <div class="detail-copy-row">
-        <div class="detail-val mono" style="flex:1">${esc(l.licenseKey)}</div>
-        <button class="btn btn-xs btn-copy-key" style="flex-shrink:0;margin-top:2px"
-          onclick="copyKey(${JSON.stringify(l.id)});closeDetail()">Copy Key</button>
+    <!-- Profile card -->
+    <div class="dc-profile">
+      <div class="dc-avatar">${esc(initials)}</div>
+      <div class="dc-profile-right">
+        <div class="dc-name">${esc(l.name)}</div>
+        <div class="dc-sub">${subHtml}</div>
+      </div>
+    </div>
+
+    <!-- Info grid -->
+    <div class="dc-grid">
+      <div class="dc-cell dc-full">
+        <div class="dc-lbl">Machine ID</div>
+        <div class="dc-val dc-mono">${esc(l.machineId)}</div>
+      </div>
+      <div class="dc-cell">
+        <div class="dc-lbl">Generated</div>
+        <div class="dc-val">${esc(fmtDate(l.createdAt))}</div>
+      </div>
+      <div class="dc-cell">
+        <div class="dc-lbl">Notes</div>
+        <div class="dc-val ${l.notes ? '' : 'dc-muted'}">${l.notes ? esc(l.notes) : 'No notes'}</div>
+      </div>
+    </div>
+
+    <!-- License key -->
+    <div class="dc-key-section">
+      <div class="dc-lbl">License Key</div>
+      <div class="dc-key-box">
+        <div class="dc-key-text">${esc(l.licenseKey)}</div>
+        <button class="btn btn-xs btn-copy-key" style="flex-shrink:0"
+          onclick="copyKey(${JSON.stringify(l.id)}, this)">Copy Key</button>
       </div>
     </div>
   `;
@@ -867,10 +979,10 @@ async function generateKey() {
   }
 }
 
-function copyGenKey() {
+function copyGenKey(btn) {
   if (!genKey) return;
   window.adminAPI.copyText(genKey);
-  toast('Copied!', 'ok');
+  if (btn) flashCopied(btn);
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────────

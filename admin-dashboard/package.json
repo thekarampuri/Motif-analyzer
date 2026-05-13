@@ -3,32 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "main": "main.js",
-  "build": {
-    "appId": "com.motifanalyzer.admin",
-    "productName": "Motif Analyzer Admin",
-    "icon": "../public/app-logo.png",
-    "directories": {
-      "output": "../release-admin"
-    },
-    "files": [
-      "main.js",
-      "preload.js",
-      "index.html",
-      "app-logo.png"
-    ],
-    "extraResources": [
-      { "from": "../tools/private.key", "to": "private.key" }
-    ],
-    "win": {
-      "target": [
-        { "target": "nsis", "arch": ["x64", "arm64"] }
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "installerIcon": "../public/app-logo.png",
-      "uninstallerIcon": "../public/app-logo.png"
-    }
-  }
+  "author": "Motif Analyzer",
+  "description": "Admin dashboard for license key management"
 }

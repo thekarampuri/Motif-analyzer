@@ -1,0 +1,27 @@
+{
+  "appId": "com.motifanalyzer.admin",
+  "productName": "Motif Analyzer Admin",
+  "icon": "public/app-logo.png",
+  "directories": {
+    "app": "admin-dashboard",
+    "output": "release-admin"
+  },
+  "files": [
+    "main.js",
+    "preload.js",
+    "index.html",
+    "app-logo.png"
+  ],
+  "extraResources": [
+    { "from": "tools/private.key", "to": "private.key" }
+  ],
+  "win": {
+    "target": [
+      { "target": "nsis", "arch": ["x64", "arm64"] }
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true
+  }
+}

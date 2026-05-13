@@ -71,7 +71,15 @@ function createWindow() {
     show: false,
   });
 
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  // Clear disk cache in dev so HTML/CSS changes are always picked up immediately
+  if (isDev) {
+    mainWindow.webContents.session.clearCache().then(() => {
+      mainWindow.loadFile(path.join(__dirname, 'index.html'));
+    });
+  } else {
+    mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  }
+
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('closed', () => { mainWindow = null; });
 }
