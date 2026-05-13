@@ -769,6 +769,17 @@ async function init() {
   licenses = await window.adminAPI.getLicenses();
   renderTable();
   updateStats();
+
+  // ── Table action delegation — handles copy/view/delete without inline onclick ──
+  document.getElementById('tbody').addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const id     = btn.dataset.id;
+    const action = btn.dataset.action;
+    if (action === 'copy')   { window.adminAPI.copyText(licenses.find(l => l.id === id)?.licenseKey || ''); flashCopied(btn); }
+    if (action === 'view')   openDetail(id);
+    if (action === 'delete') askDelete(id, btn.dataset.name);
+  });
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
@@ -824,9 +835,9 @@ function renderTable() {
       <td class="c-date">${fmtDate(l.createdAt)}</td>
       <td>
         <div class="c-actions">
-          <button class="btn btn-xs btn-copy-key" onclick="copyKey(${JSON.stringify(l.id)}, this)">Copy Key</button>
-          <button class="btn btn-xs btn-view"     onclick="openDetail(${JSON.stringify(l.id)})">View</button>
-          <button class="btn btn-xs btn-del"      onclick="askDelete(${JSON.stringify(l.id)}, ${JSON.stringify(l.name)})">Delete</button>
+          <button class="btn btn-xs btn-copy-key" data-action="copy"   data-id="${l.id}">Copy Key</button>
+          <button class="btn btn-xs btn-view"     data-action="view"   data-id="${l.id}">View</button>
+          <button class="btn btn-xs btn-del"      data-action="delete" data-id="${l.id}" data-name="${esc(l.name)}">Delete</button>
         </div>
       </td>
     </tr>
@@ -915,11 +926,17 @@ function openDetail(id) {
       <div class="dc-lbl">License Key</div>
       <div class="dc-key-box">
         <div class="dc-key-text">${esc(l.licenseKey)}</div>
-        <button class="btn btn-xs btn-copy-key" style="flex-shrink:0"
-          onclick="copyKey(${JSON.stringify(l.id)}, this)">Copy Key</button>
+        <button class="btn btn-xs btn-copy-key" id="detail-copy-btn" style="flex-shrink:0">Copy Key</button>
       </div>
     </div>
   `;
+
+  // Attach copy listener directly — avoids any inline-onclick quoting issue
+  document.getElementById('detail-copy-btn').addEventListener('click', function () {
+    window.adminAPI.copyText(l.licenseKey);
+    flashCopied(this);
+  });
+
   document.getElementById('detail-overlay').classList.add('open');
 }
 
