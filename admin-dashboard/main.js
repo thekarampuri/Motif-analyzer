@@ -1,8 +1,9 @@
 const { app, BrowserWindow, ipcMain, clipboard, dialog, Menu, shell } = require('electron');
-const path   = require('path');
-const fs     = require('fs');
-const crypto = require('crypto');
-const os     = require('os');
+const path       = require('path');
+const fs         = require('fs');
+const originalFs = require('original-fs'); // bypass Electron's asar interception
+const crypto     = require('crypto');
+const os         = require('os');
 const { execFileSync } = require('child_process');
 
 app.setName('Motif Analyzer Admin');
@@ -138,8 +139,8 @@ ipcMain.handle('check-ready', () => ({
 ipcMain.handle('get-licenses', () => loadLicenses());
 
 ipcMain.handle('generate-license', (_ev, { name, business, email, machineId, notes, logoPath }) => {
-  const normalizedId = machineId.toUpperCase().trim();
-  const licenseKey   = generateLicenseKey(normalizedId);
+  const normalizedId = (machineId || '').toUpperCase().trim();
+  const licenseKey   = normalizedId ? generateLicenseKey(normalizedId) : '';
   const record = {
     id:        crypto.randomUUID(),
     name:      name.trim(),
@@ -152,6 +153,18 @@ ipcMain.handle('generate-license', (_ev, { name, business, email, machineId, not
   };
   saveLicense(record, logoPath || null);
   return record;
+});
+
+ipcMain.handle('set-machine-id', (_ev, { id, machineId }) => {
+  const licenses = loadLicenses();
+  const rec = licenses.find(l => l.id === id);
+  if (!rec) throw new Error('Record not found');
+  const normalizedId = machineId.toUpperCase().trim();
+  if (!normalizedId) throw new Error('Machine ID is required');
+  rec.machineId  = normalizedId;
+  rec.licenseKey = generateLicenseKey(normalizedId);
+  saveLicense(rec, null);
+  return rec;
 });
 
 ipcMain.handle('delete-license', (_ev, id) => { deleteLicense(id); return true; });
@@ -242,13 +255,14 @@ ipcMain.handle('build-exe', async (_ev, { licenseId }) => {
     }
 
     // 4. Repack the patched asar
+    // Use .tmp extension so Electron's asar interceptor doesn't interfere during createPackage
     log('▶ Repacking asar…\n');
-    const patchedAsar = tmpBase + '-app.asar';
+    const patchedAsar = tmpBase + '-app.tmp';
     await asar.createPackage(extractDir, patchedAsar);
     log('  ✓ Repacked\n\n');
 
-    // 5. Replace app.asar in staged copy with the patched one
-    fs.copyFileSync(patchedAsar, origAsar);
+    // 5. Replace app.asar in staged copy using original-fs to bypass Electron's asar interception
+    originalFs.copyFileSync(patchedAsar, origAsar);
     log('▶ Compiling installer…\n');
 
     // 6. Ensure output business folder exists
@@ -324,7 +338,7 @@ SectionEnd
     for (const p of [
       tmpBase + '-stage',
       tmpBase + '-extracted',
-      tmpBase + '-app.asar',
+      tmpBase + '-app.tmp',
       tmpBase + '.nsi',
     ]) {
       try { fs.rmSync(p, { recursive: true, force: true }); } catch {}

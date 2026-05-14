@@ -477,7 +477,7 @@ td { padding: 10px 14px; font-size: 12px; color: var(--text); vertical-align: mi
 <div class="overlay" id="add-overlay">
   <div class="modal" id="add-modal">
     <div class="modal-hdr">
-      <div class="modal-hdr-title">Generate License Key</div>
+      <div class="modal-hdr-title">Add Business</div>
       <button class="modal-close" onclick="closeAdd()">✕</button>
     </div>
     <div class="modal-body">
@@ -506,30 +506,17 @@ td { padding: 10px 14px; font-size: 12px; color: var(--text); vertical-align: mi
         <label>Email</label>
         <input id="f-email" type="email" placeholder="e.g. john@acmetextiles.com" autocomplete="off" />
       </div>
-      <div class="field mid-field">
-        <label>Machine ID <span class="req">*</span></label>
-        <input id="f-mid" type="text"
-          placeholder="e.g. A1B2C3D4-E5F6A7B8-C9D0E1F2-A3B4C5D6"
-          autocomplete="off" autocorrect="off" spellcheck="false" />
-        <div class="field-hint">Copy from the customer's Motif Analyzer activation screen</div>
-      </div>
       <div class="field">
         <label>Notes</label>
-        <textarea id="f-notes" placeholder="Optional notes about this customer or license…"></textarea>
+        <textarea id="f-notes" placeholder="Optional notes about this business…"></textarea>
       </div>
-
-      <!-- Key result -->
-      <div class="key-result" id="key-result" style="display:none">
-        <div class="key-result-lbl">License Key Generated</div>
-        <div class="key-wrap">
-          <div class="key-text" id="key-display"></div>
-          <button class="btn btn-xs btn-copy-key" onclick="copyGenKey(this)">Copy</button>
-        </div>
+      <div style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text3);margin-top:4px">
+        💡 After saving, you can build the branded .exe and generate a license key from the business detail view.
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeAdd()">Cancel</button>
-      <button class="btn btn-primary" id="gen-btn" onclick="generateKey()">Generate Key</button>
+      <button class="btn btn-primary" id="gen-btn" onclick="saveBusiness()">Save Business</button>
     </div>
   </div>
 </div>
@@ -627,10 +614,7 @@ async function init() {
 
   if (!keyAvailable) {
     document.getElementById('key-warning').style.display = 'block';
-    document.getElementById('key-path-hint').textContent = info.storagePath + '..\\private.key';
-    document.getElementById('add-btn').disabled = true;
-    document.getElementById('add-btn').style.opacity = '.45';
-    document.getElementById('add-btn').title = 'Private key not found';
+    document.getElementById('key-path-hint').textContent = info.storagePath + '\\private.key';
   }
 
   const el = document.getElementById('storage-path');
@@ -647,7 +631,7 @@ async function init() {
     if (!btn) return;
     const id     = btn.dataset.id;
     const action = btn.dataset.action;
-    if (action === 'copy')   { window.adminAPI.copyText(licenses.find(l => l.id === id)?.licenseKey || ''); flashCopied(btn); }
+    if (action === 'copy')   { const key = licenses.find(l => l.id === id)?.licenseKey; if (key) { window.adminAPI.copyText(key); flashCopied(btn); } }
     if (action === 'view')   openDetail(id);
     if (action === 'delete') askDelete(id, btn.dataset.name);
   });
@@ -705,13 +689,15 @@ function renderTable() {
       <td class="c-name">${esc(l.name)}</td>
       <td class="c-biz">${esc(l.business || '—')}</td>
       <td class="c-biz">${esc(l.email    || '—')}</td>
-      <td class="c-mid" title="${esc(l.machineId)}">${esc(l.machineId)}</td>
+      <td class="c-mid" title="${esc(l.machineId)}">${l.machineId ? esc(l.machineId) : '<em style="color:var(--text3)">—</em>'}</td>
       <td class="c-date">${fmtDate(l.createdAt)}</td>
       <td>
         <div class="c-actions">
-          <button class="btn btn-xs btn-copy-key" data-action="copy"   data-id="${l.id}">Copy Key</button>
-          <button class="btn btn-xs btn-view"     data-action="view"   data-id="${l.id}">View</button>
-          <button class="btn btn-xs btn-del"      data-action="delete" data-id="${l.id}" data-name="${esc(l.name)}">Delete</button>
+          ${l.licenseKey
+            ? `<button class="btn btn-xs btn-copy-key" data-action="copy" data-id="${l.id}">Copy Key</button>`
+            : `<button class="btn btn-xs btn-build"    data-action="view" data-id="${l.id}">+ Machine ID</button>`}
+          <button class="btn btn-xs btn-view" data-action="view"   data-id="${l.id}">View</button>
+          <button class="btn btn-xs btn-del"  data-action="delete" data-id="${l.id}" data-name="${esc(l.name)}">Delete</button>
         </div>
       </td>
     </tr>`;
@@ -797,13 +783,31 @@ function openDetail(id) {
       </div>
     </div>
 
+    ${l.licenseKey ? `
     <div class="dc-key-section">
       <div class="dc-lbl">License Key</div>
       <div class="dc-key-box">
         <div class="dc-key-text">${esc(l.licenseKey)}</div>
         <button class="btn btn-xs btn-copy-key" id="detail-copy-btn" style="flex-shrink:0">Copy Key</button>
       </div>
-    </div>
+    </div>` : `
+    <div class="dc-key-section" style="border-color:rgba(124,108,248,.2)">
+      <div class="dc-lbl" style="color:var(--text2)">License Key</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">
+        Enter the customer's Machine ID to generate their license key.
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="detail-mid-input" type="text"
+          placeholder="e.g. A1B2-C3D4-E5F6-A7B8"
+          autocomplete="off" spellcheck="false"
+          style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;
+                 color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 10px;outline:none" />
+        <button class="btn btn-primary btn-xs" id="detail-gen-key-btn" style="flex-shrink:0;height:34px;padding:0 14px">
+          Generate Key
+        </button>
+      </div>
+      <div class="field-hint" style="margin-top:6px">Copy from the customer's Motif Analyzer activation screen</div>
+    </div>`}
 
     <div class="dc-build-section">
       <div class="dc-lbl">Branded Installer</div>
@@ -819,10 +823,36 @@ function openDetail(id) {
     </div>
   `;
 
-  document.getElementById('detail-copy-btn').addEventListener('click', function () {
-    window.adminAPI.copyText(l.licenseKey);
-    flashCopied(this);
-  });
+  if (l.licenseKey) {
+    document.getElementById('detail-copy-btn').addEventListener('click', function () {
+      window.adminAPI.copyText(l.licenseKey);
+      flashCopied(this);
+    });
+  } else {
+    document.getElementById('detail-gen-key-btn').addEventListener('click', async function () {
+      const mid = document.getElementById('detail-mid-input').value.trim();
+      if (!mid) {
+        document.getElementById('detail-mid-input').style.borderColor = 'var(--error)';
+        setTimeout(() => document.getElementById('detail-mid-input').style.borderColor = '', 1200);
+        return;
+      }
+      this.textContent = 'Generating…';
+      this.disabled = true;
+      try {
+        const updated = await window.adminAPI.setMachineId({ id: l.id, machineId: mid });
+        const idx = licenses.findIndex(x => x.id === l.id);
+        if (idx !== -1) licenses[idx] = updated;
+        renderTable(); updateStats();
+        closeDetail();
+        openDetail(l.id);
+        toast('License key generated', 'ok');
+      } catch (err) {
+        this.textContent = 'Generate Key';
+        this.disabled = false;
+        toast('Error: ' + err.message, 'err');
+      }
+    });
+  }
 
   document.getElementById('detail-build-btn').addEventListener('click', function () {
     closeDetail();
@@ -845,12 +875,10 @@ function closeDetail() {
 
 // ── Add modal ─────────────────────────────────────────────────────────────────
 function openAdd() {
-  if (!keyAvailable) return;
-  ['f-name','f-biz','f-email','f-mid','f-notes'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('key-result').style.display = 'none';
-  document.getElementById('gen-btn').textContent = 'Generate Key';
+  ['f-name','f-biz','f-email','f-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('gen-btn').textContent = 'Save Business';
   document.getElementById('gen-btn').disabled    = false;
-  document.getElementById('gen-btn').onclick     = generateKey;
+  document.getElementById('gen-btn').onclick     = saveBusiness;
   // Reset logo
   selectedLogoPath = null;
   document.getElementById('logo-upload-name').textContent = 'Click to select a logo image';
@@ -858,55 +886,39 @@ function openAdd() {
   const prev = document.getElementById('logo-preview');
   prev.src   = '';
   prev.style.display = 'none';
-  genKey = null;
   document.getElementById('add-overlay').classList.add('open');
   setTimeout(() => document.getElementById('f-name').focus(), 80);
 }
 
 function closeAdd() {
   document.getElementById('add-overlay').classList.remove('open');
-  genKey = null;
 }
 
-async function generateKey() {
-  const name      = document.getElementById('f-name').value.trim();
-  const business  = document.getElementById('f-biz').value.trim();
-  const email     = document.getElementById('f-email').value.trim();
-  const machineId = document.getElementById('f-mid').value.trim();
-  const notes     = document.getElementById('f-notes').value.trim();
+async function saveBusiness() {
+  const name     = document.getElementById('f-name').value.trim();
+  const business = document.getElementById('f-biz').value.trim();
+  const email    = document.getElementById('f-email').value.trim();
+  const notes    = document.getElementById('f-notes').value.trim();
 
-  if (!name)      { shakeField('f-name'); toast('Customer name is required', 'err'); return; }
-  if (!machineId) { shakeField('f-mid');  toast('Machine ID is required', 'err');    return; }
+  if (!name) { shakeField('f-name'); toast('Customer name is required', 'err'); return; }
 
   const btn = document.getElementById('gen-btn');
-  btn.textContent = 'Generating…';
+  btn.textContent = 'Saving…';
   btn.disabled    = true;
 
   try {
     const record = await window.adminAPI.generateLicense({
-      name, business, email, machineId, notes, logoPath: selectedLogoPath
+      name, business, email, machineId: '', notes, logoPath: selectedLogoPath
     });
     licenses.unshift(record);
-    genKey = record.licenseKey;
-
-    document.getElementById('key-display').textContent = record.licenseKey;
-    document.getElementById('key-result').style.display = 'block';
-    btn.textContent = '✓  Done — Close';
-    btn.disabled    = false;
-    btn.onclick     = () => { closeAdd(); renderTable(); updateStats(); };
-
-    toast('License key generated and saved', 'ok');
+    renderTable(); updateStats();
+    closeAdd();
+    toast('Business saved — open it to build the exe or add a machine ID', 'ok');
   } catch (err) {
-    btn.textContent = 'Generate Key';
+    btn.textContent = 'Save Business';
     btn.disabled    = false;
     toast('Error: ' + err.message, 'err');
   }
-}
-
-function copyGenKey(btn) {
-  if (!genKey) return;
-  window.adminAPI.copyText(genKey);
-  if (btn) flashCopied(btn);
 }
 
 // ── Build branded exe ─────────────────────────────────────────────────────────
@@ -1053,7 +1065,7 @@ document.addEventListener('keydown', e => {
     if (document.getElementById('settings-overlay').classList.contains('open')) { closeSettings(); return; }
     if (document.getElementById('add-overlay').classList.contains('open'))      { closeAdd();      return; }
   }
-  if ((e.ctrlKey||e.metaKey) && e.key==='n' && keyAvailable) { e.preventDefault(); openAdd(); }
+  if ((e.ctrlKey||e.metaKey) && e.key==='n') { e.preventDefault(); openAdd(); }
   if ((e.ctrlKey||e.metaKey) && e.key===',') { e.preventDefault(); openSettings(); }
 });
 
