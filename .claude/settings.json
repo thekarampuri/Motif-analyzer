@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git stash *)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/electron/package.json'\\).version\\)\")",
+      "Bash(timeout 5 node_modules/.bin/electron --version)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d[k] for k in ['main','exports','version'] if k in d}, indent=2\\)\\)\")"
+    ]
+  }
+}

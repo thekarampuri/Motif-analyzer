@@ -110,6 +110,7 @@ export default function LeftPanel({
   activeTool, onToolChange, penColorHex, onPenColorChange, floatCountText,
 }: LeftPanelProps) {
   const uploadRef = useRef<HTMLInputElement>(null);
+  const [logoSrc, setLogoSrc] = useState('/brand-logo.png');
   const [logoMissing, setLogoMissing] = useState(false);
 
   /* ── helpers ── */
@@ -308,9 +309,12 @@ export default function LeftPanel({
           display: 'flex', justifyContent: 'center', alignItems: 'center',
         }}>
           <img
-            src="/logo.png"
+            src={logoSrc}
             alt="Business Logo"
-            onError={() => setLogoMissing(true)}
+            onError={() => {
+              if (logoSrc === '/brand-logo.png') setLogoSrc('/app-logo.png');
+              else setLogoMissing(true);
+            }}
             style={{ maxWidth: '100%', maxHeight: 180, objectFit: 'contain', display: 'block' }}
           />
         </div>
