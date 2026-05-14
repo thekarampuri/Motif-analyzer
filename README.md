@@ -171,8 +171,6 @@ Their Machine ID changes. They send you the new ID, you generate a new license k
 tools/private.key      # ECDSA private key — anyone with this can generate unlimited licenses
 ```
 
-Both are already in `.gitignore`.
-
 ---
 
 ## Scripts reference
