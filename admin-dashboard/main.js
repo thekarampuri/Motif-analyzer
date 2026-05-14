@@ -10,7 +10,7 @@ app.setName('Motif Analyzer Admin');
 const isDev = process.env.NODE_ENV === 'development';
 
 // ── Storage root ──
-const ROOT        = path.join('C:\\ProgramData', 'MotifAnalyzer');
+const ROOT        = path.join('C:\\ProgramData', 'MotifAnalyzerAdmin');
 const CONFIG_FILE = path.join(ROOT, 'config.json');
 
 function ensureRoot() {
