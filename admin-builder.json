@@ -13,7 +13,10 @@
     "app-logo.png"
   ],
   "extraResources": [
-    { "from": "tools/private.key", "to": "private.key" }
+    { "from": "tools/private.key",     "to": "private.key" },
+    { "from": "tools/nsis",            "to": "nsis" },
+    { "from": "tools/7za.exe",         "to": "7za.exe" },
+    { "from": "tools/app-template.7z", "to": "app-template.7z" }
   ],
   "win": {
     "target": [
@@ -22,6 +25,7 @@
   },
   "nsis": {
     "oneClick": false,
-    "allowToChangeInstallationDirectory": true
+    "allowToChangeInstallationDirectory": true,
+    "include": "tools/admin-install.nsh"
   }
 }

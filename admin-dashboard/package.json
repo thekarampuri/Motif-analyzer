@@ -4,5 +4,8 @@
   "private": true,
   "main": "main.js",
   "author": "Motif Analyzer",
-  "description": "Admin dashboard for license key management"
+  "description": "Admin dashboard for license key management",
+  "dependencies": {
+    "@electron/asar": "^3.2.8"
+  }
 }

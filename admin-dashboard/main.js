@@ -3,7 +3,7 @@ const path   = require('path');
 const fs     = require('fs');
 const crypto = require('crypto');
 const os     = require('os');
-const { spawn } = require('child_process');
+const { execFileSync } = require('child_process');
 
 app.setName('Motif Analyzer Admin');
 
@@ -21,23 +21,26 @@ function sanitizeName(name) {
   return (name || 'Unknown').replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').trim() || 'Unknown';
 }
 
-// ── Config (project root, etc.) ──
+// ── Config ──
 function loadConfig() {
   ensureRoot();
   try { return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')); } catch { return {}; }
 }
-
 function saveConfig(patch) {
   ensureRoot();
   fs.writeFileSync(CONFIG_FILE, JSON.stringify({ ...loadConfig(), ...patch }, null, 2), 'utf8');
 }
 
-function getProjectRoot() {
-  if (!app.isPackaged) return path.join(__dirname, '..');
-  return loadConfig().projectRoot || '';
+// ── Resource paths (bundled tools) ──
+function getResourcesDir() {
+  return app.isPackaged ? process.resourcesPath : path.join(__dirname, '..', 'tools');
 }
+function getNsisDir()            { return path.join(getResourcesDir(), 'nsis'); }
+function get7zaPath()            { return path.join(getResourcesDir(), '7za.exe'); }
+function getMakeNsis()           { return path.join(getNsisDir(), 'makensis.exe'); }
+function getTemplateArchive()    { return path.join(getResourcesDir(), 'app-template.7z'); }
 
-// ── Private key path ──
+// ── Private key ──
 function getPrivateKeyPath() {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'private.key')
@@ -68,14 +71,12 @@ function saveLicense(record, logoSrcPath) {
   ensureRoot();
   const dir = getBusinessDir(record);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
   if (logoSrcPath && fs.existsSync(logoSrcPath)) {
     const ext     = path.extname(logoSrcPath).toLowerCase() || '.png';
     const logoDst = path.join(dir, 'logo' + ext);
     fs.copyFileSync(logoSrcPath, logoDst);
     record.logoPath = logoDst;
   }
-
   fs.writeFileSync(path.join(dir, 'license.json'), JSON.stringify(record, null, 2), 'utf8');
 }
 
@@ -89,7 +90,7 @@ function deleteLicense(id) {
 // ── Key generation ──
 function generateLicenseKey(machineId) {
   const keyPath = getPrivateKeyPath();
-  if (!fs.existsSync(keyPath)) throw new Error(`Private key not found.\nExpected: ${keyPath}`);
+  if (!fs.existsSync(keyPath)) throw new Error(`Private key not found: ${keyPath}`);
   const sign = crypto.createSign('SHA256');
   sign.update(machineId.toUpperCase().trim());
   return sign.sign(fs.readFileSync(keyPath, 'utf8')).toString('base64');
@@ -128,9 +129,10 @@ function createWindow() {
 
 // ── IPC ──
 ipcMain.handle('check-ready', () => ({
-  keyExists:   fs.existsSync(getPrivateKeyPath()),
-  storagePath: ROOT,
-  projectRoot: getProjectRoot(),
+  keyExists:     fs.existsSync(getPrivateKeyPath()),
+  storagePath:   ROOT,
+  templateReady: fs.existsSync(getTemplateArchive()),
+  toolsReady:    fs.existsSync(getMakeNsis()) && fs.existsSync(get7zaPath()),
 }));
 
 ipcMain.handle('get-licenses', () => loadLicenses());
@@ -153,7 +155,6 @@ ipcMain.handle('generate-license', (_ev, { name, business, email, machineId, not
 });
 
 ipcMain.handle('delete-license', (_ev, id) => { deleteLicense(id); return true; });
-
 ipcMain.handle('copy-text', (_ev, text) => { clipboard.writeText(text); return true; });
 
 ipcMain.handle('pick-logo', async () => {
@@ -167,8 +168,7 @@ ipcMain.handle('pick-logo', async () => {
 
 ipcMain.handle('get-config', () => loadConfig());
 ipcMain.handle('set-config', (_ev, patch) => { saveConfig(patch); return true; });
-
-ipcMain.handle('open-folder', (_ev, folderPath) => { shell.openPath(folderPath); return true; });
+ipcMain.handle('open-folder', (_ev, p) => { shell.openPath(p); return true; });
 
 ipcMain.handle('export-csv', async () => {
   const result = await dialog.showSaveDialog(mainWindow, {
@@ -176,7 +176,6 @@ ipcMain.handle('export-csv', async () => {
     filters: [{ name: 'CSV File', extensions: ['csv'] }],
   });
   if (result.canceled || !result.filePath) return { success: false };
-
   const licenses = loadLicenses();
   const header   = '"#","Name","Business","Email","Machine ID","License Key","Created At","Notes"';
   const rows     = licenses.map((l, i) =>
@@ -188,77 +187,148 @@ ipcMain.handle('export-csv', async () => {
   return { success: true, path: result.filePath };
 });
 
-// ── Build branded exe ──
+// ── Build branded exe (fully self-contained, no source code needed) ──
 ipcMain.handle('build-exe', async (_ev, { licenseId }) => {
-  const projectRoot = getProjectRoot();
-  if (!projectRoot || !fs.existsSync(projectRoot)) {
-    return { success: false, error: 'Project root not set. Open Settings (⚙) and set the project path first.' };
-  }
+  const sevenZa  = get7zaPath();
+  const makeNsis = getMakeNsis();
+  const template = getTemplateArchive();
 
-  const license  = loadLicenses().find(l => l.id === licenseId);
+  if (!fs.existsSync(template))  return { success: false, error: 'App template not found. Please reinstall the admin dashboard.' };
+  if (!fs.existsSync(sevenZa))   return { success: false, error: 'Bundled 7za.exe not found. Please reinstall the admin dashboard.' };
+  if (!fs.existsSync(makeNsis))  return { success: false, error: 'Bundled NSIS tools not found. Please reinstall the admin dashboard.' };
+
+  const license = loadLicenses().find(l => l.id === licenseId);
   if (!license) return { success: false, error: 'License not found.' };
 
-  const logoSrc      = license.logoPath;
-  const bizName      = sanitizeName(license.business || license.name);
-  const pubBrandLogo = path.join(projectRoot, 'public', 'brand-logo.png');
-  const outDir       = path.join(projectRoot, 'out');
-  const outBrandLogo = path.join(outDir, 'brand-logo.png');
-  const outExists    = fs.existsSync(outDir);
+  // ── Load @electron/asar dynamically (bundled by electron-builder) ──
+  let asar;
+  try {
+    asar = require('@electron/asar');
+  } catch {
+    return { success: false, error: '@electron/asar not found. Please reinstall the admin dashboard.' };
+  }
 
-  // Snapshot originals for restore
-  const origPub = fs.existsSync(pubBrandLogo) ? fs.readFileSync(pubBrandLogo) : null;
-  const origOut = fs.existsSync(outBrandLogo) ? fs.readFileSync(outBrandLogo) : null;
-
-  const srcLogo = (logoSrc && fs.existsSync(logoSrc))
-    ? logoSrc
-    : path.join(projectRoot, 'public', 'app-logo.png');
+  const bizName = sanitizeName(license.business || license.name);
+  const logoSrc = license.logoPath && fs.existsSync(license.logoPath) ? license.logoPath : null;
+  const log     = msg => mainWindow?.webContents.send('build-log', msg);
+  const tmpBase = path.join(os.tmpdir(), 'motif-brand-' + Date.now());
 
   try {
-    // Inject business logo into project
-    fs.copyFileSync(srcLogo, pubBrandLogo);
-    if (outExists) fs.copyFileSync(srcLogo, outBrandLogo);
+    // 1. Extract the bundled app template to a staging directory
+    log('▶ Staging app files…\n');
+    const stageDir = tmpBase + '-stage';
+    fs.mkdirSync(stageDir, { recursive: true });
+    execFileSync(sevenZa, ['x', template, '-o' + stageDir, '-y'], { windowsHide: true });
+    log('  ✓ Staged\n\n');
 
-    // Use dist:branded (no next build) if out/ exists; else full dist
-    const script = outExists ? 'dist:branded' : 'dist';
-    mainWindow?.webContents.send('build-log', `▶ Running: npm run ${script}\n`);
-    mainWindow?.webContents.send('build-log', `  Project: ${projectRoot}\n\n`);
+    // 2. Extract the app.asar from the staged template
+    const origAsar   = path.join(stageDir, 'resources', 'app.asar');
+    if (!fs.existsSync(origAsar)) {
+      return { success: false, error: 'app.asar not found in template. Please reinstall the admin dashboard.' };
+    }
 
-    await new Promise((resolve, reject) => {
-      const child = spawn('npm', ['run', script], {
-        cwd: projectRoot,
-        shell: true,
-        env: { ...process.env, CSC_IDENTITY_AUTO_DISCOVERY: 'false' },
-      });
-      child.stdout.on('data', d => mainWindow?.webContents.send('build-log', d.toString()));
-      child.stderr.on('data', d => mainWindow?.webContents.send('build-log', d.toString()));
-      child.on('close', code =>
-        code === 0 ? resolve() : reject(new Error(`Build exited with code ${code}`))
-      );
-      child.on('error', reject);
-    });
+    log('▶ Extracting app.asar…\n');
+    const extractDir = tmpBase + '-extracted';
+    await asar.extractAll(origAsar, extractDir);
+    log('  ✓ Extracted\n\n');
 
-    // Locate the built installer
-    const releaseDir = path.join(projectRoot, 'release');
-    const exeFile    = fs.readdirSync(releaseDir).find(f => f.endsWith('.exe') && !f.includes('blockmap'));
-    if (!exeFile) throw new Error('No .exe found in release/ after build.');
+    // 3. Inject the business logo as brand-logo.png
+    log('▶ Injecting business logo…\n');
+    if (logoSrc) {
+      fs.copyFileSync(logoSrc, path.join(extractDir, 'out', 'brand-logo.png'));
+      log(`  ✓ Logo set: ${path.basename(logoSrc)}\n\n`);
+    } else {
+      log('  ℹ No logo uploaded — using default app logo\n\n');
+    }
 
-    // Save to business folder
+    // 4. Repack the patched asar
+    log('▶ Repacking asar…\n');
+    const patchedAsar = tmpBase + '-app.asar';
+    await asar.createPackage(extractDir, patchedAsar);
+    log('  ✓ Repacked\n\n');
+
+    // 5. Replace app.asar in staged copy with the patched one
+    fs.copyFileSync(patchedAsar, origAsar);
+    log('▶ Compiling installer…\n');
+
+    // 6. Ensure output business folder exists
     const bizDir = path.join(ROOT, bizName);
     if (!fs.existsSync(bizDir)) fs.mkdirSync(bizDir, { recursive: true });
 
-    const dstExe = path.join(bizDir, `${bizName} - Motif Analyzer Setup.exe`);
-    fs.copyFileSync(path.join(releaseDir, exeFile), dstExe);
+    const outExe    = path.join(bizDir, `${bizName} - Motif Analyzer Setup.exe`);
+    const nsisDir   = getNsisDir();
+    const nsisScript = tmpBase + '.nsi';
 
-    return { success: true, exePath: dstExe, folderPath: bizDir };
+    // Escape backslashes for NSIS
+    const stageDirNsis    = stageDir.replace(/\\/g, '\\\\');
+    const outExeNsis      = outExe.replace(/\\/g, '\\\\');
+    const bizNameEscaped  = bizName.replace(/"/g, '""');
+
+    fs.writeFileSync(nsisScript, `
+Unicode true
+!define APPNAME "Motif Analyzer"
+!define INSTDIR_DEFAULT "$PROGRAMFILES64\\\\Motif Analyzer"
+!define UNINSTALLER "Uninstall Motif Analyzer.exe"
+
+Name "${bizNameEscaped} - Motif Analyzer"
+OutFile "${outExeNsis}"
+InstallDir "\${INSTDIR_DEFAULT}"
+InstallDirRegKey HKLM "Software\\\\Motif Analyzer" "InstallDir"
+RequestExecutionLevel admin
+SetCompressor /SOLID lzma
+
+!include "MUI2.nsh"
+!define MUI_ABORTWARNING
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_LANGUAGE "English"
+
+Section "Install"
+  SetOutPath "$INSTDIR"
+  File /r "${stageDirNsis}\\\\*.*"
+  CreateShortCut "$DESKTOP\\\\Motif Analyzer.lnk" "$INSTDIR\\\\Motif Analyzer.exe"
+  CreateDirectory "$SMPROGRAMS\\\\Motif Analyzer"
+  CreateShortCut "$SMPROGRAMS\\\\Motif Analyzer\\\\Motif Analyzer.lnk" "$INSTDIR\\\\Motif Analyzer.exe"
+  CreateShortCut "$SMPROGRAMS\\\\Motif Analyzer\\\\Uninstall.lnk" "$INSTDIR\\\\\${UNINSTALLER}"
+  WriteRegStr HKLM "Software\\\\Motif Analyzer" "InstallDir" "$INSTDIR"
+  WriteRegStr HKLM "Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Uninstall\\\\MotifAnalyzer" "DisplayName" "Motif Analyzer"
+  WriteRegStr HKLM "Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Uninstall\\\\MotifAnalyzer" "UninstallString" "$\\"$INSTDIR\\\\\${UNINSTALLER}$\\""
+  WriteUninstaller "$INSTDIR\\\\\${UNINSTALLER}"
+SectionEnd
+
+Section "Uninstall"
+  RMDir /r "$INSTDIR"
+  Delete "$DESKTOP\\\\Motif Analyzer.lnk"
+  RMDir /r "$SMPROGRAMS\\\\Motif Analyzer"
+  DeleteRegKey HKLM "Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Uninstall\\\\MotifAnalyzer"
+  DeleteRegKey HKLM "Software\\\\Motif Analyzer"
+SectionEnd
+`, 'utf8');
+
+    // 7. Run makensis
+    execFileSync(makeNsis,
+      [`/DNSISDIR=${nsisDir}`, nsisScript],
+      { windowsHide: true, env: { ...process.env, NSISDIR: nsisDir } }
+    );
+    log('  ✓ Installer compiled\n\n');
+    log(`✅ Done!\n   ${outExe}\n`);
+
+    return { success: true, exePath: outExe, folderPath: bizDir };
+
   } catch (err) {
+    log(`\n✕ Error: ${err.message}\n`);
     return { success: false, error: err.message };
   } finally {
-    // Restore brand-logo files
-    if (origPub) fs.writeFileSync(pubBrandLogo, origPub);
-    else if (fs.existsSync(pubBrandLogo)) fs.unlinkSync(pubBrandLogo);
-
-    if (origOut) fs.writeFileSync(outBrandLogo, origOut);
-    else if (outExists && fs.existsSync(outBrandLogo)) fs.unlinkSync(outBrandLogo);
+    for (const p of [
+      tmpBase + '-stage',
+      tmpBase + '-extracted',
+      tmpBase + '-app.asar',
+      tmpBase + '.nsi',
+    ]) {
+      try { fs.rmSync(p, { recursive: true, force: true }); } catch {}
+    }
   }
 });
 
